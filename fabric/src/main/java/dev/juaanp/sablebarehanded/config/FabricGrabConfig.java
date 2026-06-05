@@ -40,7 +40,7 @@ public class FabricGrabConfig {
         public boolean ignoreCollisionsGrabEverything = false;
         public boolean ignoreCollisionsGrabEntities = false;
         public boolean ignoreCollisionsGrabOtherPlayers = false;
-        public boolean ignoreCollisionsGrabSelf = true;
+        public boolean ignoreCollisionsGrabSelf = false;
 
         public boolean ignoreCollisionsRotationEverything = false;
         public boolean ignoreCollisionsRotationEntities = true;
@@ -60,11 +60,21 @@ public class FabricGrabConfig {
     public static Common COMMON = new Common();
     public static Client CLIENT = new Client();
 
+    private static class ConfigWrapper {
+        public Common COMMON;
+        public Client CLIENT;
+
+        public ConfigWrapper(Common common, Client client) {
+            this.COMMON = common;
+            this.CLIENT = client;
+        }
+    }
+
     public static void load() {
         try {
             if (FILE.exists()) {
                 try (FileReader reader = new FileReader(FILE)) {
-                    FabricGrabConfig loaded = GSON.fromJson(reader, FabricGrabConfig.class);
+                    ConfigWrapper loaded = GSON.fromJson(reader, ConfigWrapper.class);
                     if (loaded != null) {
                         COMMON = loaded.COMMON != null ? loaded.COMMON : new Common();
                         CLIENT = loaded.CLIENT != null ? loaded.CLIENT : new Client();
@@ -80,7 +90,7 @@ public class FabricGrabConfig {
 
     public static void save() {
         try (FileWriter writer = new FileWriter(FILE)) {
-            GSON.toJson(FabricGrabConfig.class, writer);
+            GSON.toJson(new ConfigWrapper(COMMON, CLIENT), writer);
         } catch (Exception e) {
             Constants.LOG.error("Failed to save Fabric config", e);
         }
