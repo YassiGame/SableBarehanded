@@ -30,8 +30,6 @@
   "sable-barehanded.config.physics.rotation_stabilization.tooltip": "Stabilization intensity during rotation. Allows precise control.",
   "sable-barehanded.config.physics.prevent_fast_rotations": "Prevent Fast Rotations",
   "sable-barehanded.config.physics.prevent_fast_rotations.tooltip": "Caps max rotation speed to prevent erratic spins.",
-  "sable-barehanded.config.physics.pivot_at_grab_point": "Pivot at Grab Point",
-  "sable-barehanded.config.physics.pivot_at_grab_point.tooltip": "If enabled, objects rotate around the exact block grabbed.",
   "sable-barehanded.config.physics.max_rotation_speed": "Max Rotation Speed",
 
   "sable-barehanded.config.physics.creative_super_strength": "Creative Super Strength",
@@ -56,8 +54,15 @@
   "sable-barehanded.config.physics.ignore_collisions_everything": "Ignore All Collisions",
   "sable-barehanded.config.physics.ignore_collisions_everything.tooltip": "WARNING: Uses teleport mode, sub-level could fall out of the world!",
 
-  "sable-barehanded.config.client.rotation_sensitivity": "Rotation Sensitivity",
-  "sable-barehanded.config.client.invert_rotation": "Invert Rotation",
-  "sable-barehanded.config.client.invert_rotation.tooltip": "Invert rotation axes.",
-  "sable-barehanded.config.client.anim_priority": "Animation Priority"
+  "sable-barehanded.config.client.vertical_rotation_sensitivity": "Vertical Rotation Sensitivity",
+  "sable-barehanded.config.client.horizontal_rotation_sensitivity": "Horizontal Rotation Sensitivity",
+  "sable-barehanded.config.client.invert_vertical_rotation": "Invert Vertical Rotation",
+  "sable-barehanded.config.client.invert_vertical_rotation.tooltip": "Inverts the pitch (Y-axis) while rotating.",
+  "sable-barehanded.config.client.invert_horizontal_rotation": "Invert Horizontal Rotation",
+  "sable-barehanded.config.client.invert_horizontal_rotation.tooltip": "Inverts the yaw (X-axis) while rotating.",
+  "sable-barehanded.config.client.rotate_around_center": "Rotate Around Center",
+  "sable-barehanded.config.client.rotate_around_center.tooltip": "If enabled, rotating a held object will pivot around its center of mass, preventing large swings in tight spaces.",
+  "key.sable-barehanded.pivot": "Alternative Rotation Pivot",
+  "sable-barehanded.config.client.prevent_movement_while_rotating": "Prevent Movement While Rotating",
+  "sable-barehanded.config.client.prevent_movement_while_rotating.tooltip": "Locks player movement (WASD/Jump/Sneak) while the rotation key is held to prevent accidental falls."
 }

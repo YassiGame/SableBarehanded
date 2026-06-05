@@ -3,7 +3,7 @@
   "key.sable-barehanded.rotate": "Girar",
   "config.sable-barehanded.title": "Configuração do Sable Barehanded",
 
-  "sable-barehanded.config.physics.category": "Configurações de Física",
+  "sable-barehanded.config.physics.category": "Configurações do Servidor",
   "sable-barehanded.config.client.category": "Configurações de Cliente",
 
   "sable-barehanded.config.physics.core_physics": "Física Principal",
@@ -25,13 +25,11 @@
   "sable-barehanded.config.physics.enable_rotation": "Ativar Rotação",
   "sable-barehanded.config.physics.enable_rotation.tooltip": "Permite girar subníveis usando a tecla de rotação.",
   "sable-barehanded.config.physics.grab_stabilization": "Estabilização de Agarrão",
-  "sable-barehanded.config.physics.grab_stabilization.tooltip": "Intensidade de estabilização (0.0 a 1.0). Força o objeto a ignorar o torque.",
+  "sable-barehanded.config.physics.grab_stabilization.tooltip": "Intensidade de estabilização (0.0 a 1.0). Força o subnível a ignorar o torque ao ser carregado.",
   "sable-barehanded.config.physics.rotation_stabilization": "Estabilização de Rotação",
   "sable-barehanded.config.physics.rotation_stabilization.tooltip": "Intensidade de estabilização durante a rotação. Permite controle preciso.",
   "sable-barehanded.config.physics.prevent_fast_rotations": "Prevenir Rotações Rápidas",
   "sable-barehanded.config.physics.prevent_fast_rotations.tooltip": "Limita a velocidade máxima de rotação para prevenir giros erráticos.",
-  "sable-barehanded.config.physics.pivot_at_grab_point": "Pivô no Ponto de Agarrão",
-  "sable-barehanded.config.physics.pivot_at_grab_point.tooltip": "Se ativado, os objetos giram em torno do bloco exato que você agarrou.",
   "sable-barehanded.config.physics.max_rotation_speed": "Velocidade Máx. de Rotação",
 
   "sable-barehanded.config.physics.creative_super_strength": "Super Força no Criativo",
@@ -54,10 +52,17 @@
   "sable-barehanded.config.physics.ignore_collisions_other_players": "Ignorar Outros Jogadores",
   "sable-barehanded.config.physics.ignore_collisions_entities": "Ignorar Entidades",
   "sable-barehanded.config.physics.ignore_collisions_everything": "Ignorar Todas as Colisões",
-  "sable-barehanded.config.physics.ignore_collisions_everything.tooltip": "Aviso: usa modo de teletransporte, o sublevel pode cair do mundo!",
+  "sable-barehanded.config.physics.ignore_collisions_everything.tooltip": "AVISO: Usa modo de teletransporte, o sublevel pode cair do mundo!",
 
-  "sable-barehanded.config.client.rotation_sensitivity": "Sensibilidade de Rotação",
-  "sable-barehanded.config.client.invert_rotation": "Inverter Rotação",
-  "sable-barehanded.config.client.invert_rotation.tooltip": "Inverte os eixos de rotação.",
-  "sable-barehanded.config.client.anim_priority": "Prioridade de Animação"
+  "sable-barehanded.config.client.vertical_rotation_sensitivity": "Sensibilidade de Rotação Vertical",
+  "sable-barehanded.config.client.horizontal_rotation_sensitivity": "Sensibilidade de Rotação Horizontal",
+  "sable-barehanded.config.client.invert_vertical_rotation": "Inverter Rotação Vertical",
+  "sable-barehanded.config.client.invert_vertical_rotation.tooltip": "Inverte a inclinação (eixo Y) ao girar.",
+  "sable-barehanded.config.client.invert_horizontal_rotation": "Inverter Rotação Horizontal",
+  "sable-barehanded.config.client.invert_horizontal_rotation.tooltip": "Inverte a guinada (eixo X) ao girar.",
+  "sable-barehanded.config.client.rotate_around_center": "Girar em Torno do Centro",
+  "sable-barehanded.config.client.rotate_around_center.tooltip": "Se ativado, um objeto segurado girará em torno do seu centro de massa, evitando grandes oscilações em espaços apertados.",
+  "key.sable-barehanded.pivot": "Pivô de Rotação Alternativo",
+  "sable-barehanded.config.client.prevent_movement_while_rotating": "Prevenir Movimento ao Girar",
+  "sable-barehanded.config.client.prevent_movement_while_rotating.tooltip": "Bloqueia o movimento do jogador (WASD/Pular/Agachar) enquanto a tecla de rotação é mantida pressionada para evitar quedas acidentais.",
 }

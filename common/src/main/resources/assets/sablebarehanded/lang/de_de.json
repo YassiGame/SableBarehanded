@@ -3,7 +3,7 @@
   "key.sable-barehanded.rotate": "Rotieren",
   "config.sable-barehanded.title": "Sable Barehanded Konfiguration",
 
-  "sable-barehanded.config.physics.category": "Physik-Einstellungen",
+  "sable-barehanded.config.physics.category": "Server-Einstellungen",
   "sable-barehanded.config.client.category": "Client-Einstellungen",
 
   "sable-barehanded.config.physics.core_physics": "Kern-Physik",
@@ -25,13 +25,11 @@
   "sable-barehanded.config.physics.enable_rotation": "Rotation Aktivieren",
   "sable-barehanded.config.physics.enable_rotation.tooltip": "Erlaubt das Rotieren von Subleveln mit der Rotationstaste.",
   "sable-barehanded.config.physics.grab_stabilization": "Greif-Stabilisierung",
-  "sable-barehanded.config.physics.grab_stabilization.tooltip": "Stabilisierungsintensität (0.0 bis 1.0). Verhindert, dass das Objekt schaukelt.",
+  "sable-barehanded.config.physics.grab_stabilization.tooltip": "Stabilisierungsintensität (0.0 bis 1.0). Zwingt das Objekt, das Drehmoment beim Tragen zu ignorieren.",
   "sable-barehanded.config.physics.rotation_stabilization": "Rotations-Stabilisierung",
   "sable-barehanded.config.physics.rotation_stabilization.tooltip": "Stabilisierungsintensität während der Rotation. Erlaubt präzise Kontrolle.",
   "sable-barehanded.config.physics.prevent_fast_rotations": "Schnelle Rotationen Verhindern",
   "sable-barehanded.config.physics.prevent_fast_rotations.tooltip": "Begrenzt die maximale Rotationsgeschwindigkeit, um ruckartige Drehungen zu verhindern.",
-  "sable-barehanded.config.physics.pivot_at_grab_point": "Drehpunkt am Greifpunkt",
-  "sable-barehanded.config.physics.pivot_at_grab_point.tooltip": "Wenn aktiviert, rotieren Objekte um genau den gegriffenen Block.",
   "sable-barehanded.config.physics.max_rotation_speed": "Max. Rotationsgeschwindigkeit",
 
   "sable-barehanded.config.physics.creative_super_strength": "Kreativ-Superkraft",
@@ -54,10 +52,17 @@
   "sable-barehanded.config.physics.ignore_collisions_other_players": "Andere Spieler Ignorieren",
   "sable-barehanded.config.physics.ignore_collisions_entities": "Entitäten Ignorieren",
   "sable-barehanded.config.physics.ignore_collisions_everything": "Alle Kollisionen Ignorieren",
-  "sable-barehanded.config.physics.ignore_collisions_everything.tooltip": "Warnung: Verwendet Teleport-Modus, Sublevel könnte aus der Welt fallen!",
+  "sable-barehanded.config.physics.ignore_collisions_everything.tooltip": "WARNUNG: Verwendet Teleport-Modus, Sublevel könnte aus der Welt fallen!",
 
-  "sable-barehanded.config.client.rotation_sensitivity": "Rotations-Empfindlichkeit",
-  "sable-barehanded.config.client.invert_rotation": "Rotation Umkehren",
-  "sable-barehanded.config.client.invert_rotation.tooltip": "Invertiert die Rotationsachsen.",
-  "sable-barehanded.config.client.anim_priority": "Animations-Priorität"
+  "sable-barehanded.config.client.vertical_rotation_sensitivity": "Vertikale Rotations-Empfindlichkeit",
+  "sable-barehanded.config.client.horizontal_rotation_sensitivity": "Horizontale Rotations-Empfindlichkeit",
+  "sable-barehanded.config.client.invert_vertical_rotation": "Vertikale Rotation umkehren",
+  "sable-barehanded.config.client.invert_vertical_rotation.tooltip": "Invertiert die Neigung (Y-Achse) während der Rotation.",
+  "sable-barehanded.config.client.invert_horizontal_rotation": "Horizontale Rotation umkehren",
+  "sable-barehanded.config.client.invert_horizontal_rotation.tooltip": "Invertiert das Gieren (X-Achse) während der Rotation.",
+  "sable-barehanded.config.client.rotate_around_center": "Um den Mittelpunkt rotieren",
+  "sable-barehanded.config.client.rotate_around_center.tooltip": "Wenn aktiviert, dreht sich ein gehaltenes Objekt um seinen Massenmittelpunkt, was große Schwünge in engen Räumen verhindert.",
+  "key.sable-barehanded.pivot": "Alternativer Rotationsdrehpunkt",
+  "sable-barehanded.config.client.prevent_movement_while_rotating": "Bewegung während der Rotation verhindern",
+  "sable-barehanded.config.client.prevent_movement_while_rotating.tooltip": "Sperrt die Spielerbewegung (WASD/Springen/Schleichen), während die Rotationstaste gedrückt gehalten wird, um versehentliches Herunterfallen zu verhindern.",
 }

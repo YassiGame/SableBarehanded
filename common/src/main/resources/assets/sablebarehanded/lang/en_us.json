@@ -30,8 +30,6 @@
   "sable-barehanded.config.physics.rotation_stabilization.tooltip": "Stabilization intensity during rotation. Allows precise control.",
   "sable-barehanded.config.physics.prevent_fast_rotations": "Prevent Fast Rotations",
   "sable-barehanded.config.physics.prevent_fast_rotations.tooltip": "Caps max rotation speed to prevent erratic spins.",
-  "sable-barehanded.config.physics.pivot_at_grab_point": "Pivot at Grab Point",
-  "sable-barehanded.config.physics.pivot_at_grab_point.tooltip": "If enabled, objects rotate around the exact block grabbed.",
   "sable-barehanded.config.physics.max_rotation_speed": "Max Rotation Speed",
 
   "sable-barehanded.config.physics.creative_super_strength": "Creative Super Strength",

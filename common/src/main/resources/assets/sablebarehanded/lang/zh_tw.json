@@ -3,7 +3,7 @@
   "key.sable-barehanded.rotate": "旋轉",
   "config.sable-barehanded.title": "Sable Barehanded 配置",
 
-  "sable-barehanded.config.physics.category": "物理設置",
+  "sable-barehanded.config.physics.category": "伺服器設置",
   "sable-barehanded.config.client.category": "客戶端設置",
 
   "sable-barehanded.config.physics.core_physics": "核心物理",
@@ -25,13 +25,11 @@
   "sable-barehanded.config.physics.enable_rotation": "啟用旋轉",
   "sable-barehanded.config.physics.enable_rotation.tooltip": "允許使用旋轉快捷鍵旋轉子級別。",
   "sable-barehanded.config.physics.grab_stabilization": "抓取穩定",
-  "sable-barehanded.config.physics.grab_stabilization.tooltip": "穩定強度（0.0到1.0）。強制物體在搬運時忽略扭矩。",
+  "sable-barehanded.config.physics.grab_stabilization.tooltip": "穩定強度（0.0到1.0）。強制子級別在搬運時忽略扭矩。",
   "sable-barehanded.config.physics.rotation_stabilization": "旋轉穩定",
   "sable-barehanded.config.physics.rotation_stabilization.tooltip": "旋轉期間的穩定強度。允許精確控制。",
   "sable-barehanded.config.physics.prevent_fast_rotations": "防止快速旋轉",
   "sable-barehanded.config.physics.prevent_fast_rotations.tooltip": "限制最大旋轉速度以防止不穩定旋轉。",
-  "sable-barehanded.config.physics.pivot_at_grab_point": "以抓取點為樞軸",
-  "sable-barehanded.config.physics.pivot_at_grab_point.tooltip": "如果啟用，對象將圍繞所抓取的特定方塊旋轉。",
   "sable-barehanded.config.physics.max_rotation_speed": "最大旋轉速度",
 
   "sable-barehanded.config.physics.creative_super_strength": "創造模式超級力量",
@@ -56,8 +54,15 @@
   "sable-barehanded.config.physics.ignore_collisions_everything": "忽略所有碰撞",
   "sable-barehanded.config.physics.ignore_collisions_everything.tooltip": "警告：使用傳送模式，子級別可能會掉出世界！",
 
-  "sable-barehanded.config.client.rotation_sensitivity": "旋轉靈敏度",
-  "sable-barehanded.config.client.invert_rotation": "反轉旋轉",
-  "sable-barehanded.config.client.invert_rotation.tooltip": "反轉旋轉軸。",
-  "sable-barehanded.config.client.anim_priority": "動畫優先級"
+  "sable-barehanded.config.client.vertical_rotation_sensitivity": "垂直旋轉靈敏度",
+  "sable-barehanded.config.client.horizontal_rotation_sensitivity": "水平旋轉靈敏度",
+  "sable-barehanded.config.client.invert_vertical_rotation": "反轉垂直旋轉",
+  "sable-barehanded.config.client.invert_vertical_rotation.tooltip": "在旋轉時反轉俯仰角（Y軸）。",
+  "sable-barehanded.config.client.invert_horizontal_rotation": "反轉水平旋轉",
+  "sable-barehanded.config.client.invert_horizontal_rotation.tooltip": "在旋轉時反轉偏航角（X軸）。",
+  "sable-barehanded.config.client.rotate_around_center": "圍繞中心旋轉",
+  "sable-barehanded.config.client.rotate_around_center.tooltip": "如果啟用，旋轉手持物體時將圍繞其質心旋轉，以防止在狹窄空間中產生大幅擺動。",
+  "key.sable-barehanded.pivot": "備用旋轉樞軸",
+  "sable-barehanded.config.client.prevent_movement_while_rotating": "旋轉時防止移動",
+  "sable-barehanded.config.client.prevent_movement_while_rotating.tooltip": "在按住旋轉鍵時鎖定玩家移動（WASD/跳躍/潛行），以防止意外跌落。",
 }

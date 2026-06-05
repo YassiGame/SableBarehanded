@@ -3,7 +3,7 @@
   "key.sable-barehanded.rotate": "Pivoter",
   "config.sable-barehanded.title": "Configuration de Sable Barehanded",
 
-  "sable-barehanded.config.physics.category": "Paramètres Physiques",
+  "sable-barehanded.config.physics.category": "Paramètres du Serveur",
   "sable-barehanded.config.client.category": "Paramètres Client",
 
   "sable-barehanded.config.physics.core_physics": "Physique de Base",
@@ -25,13 +25,11 @@
   "sable-barehanded.config.physics.enable_rotation": "Activer la Rotation",
   "sable-barehanded.config.physics.enable_rotation.tooltip": "Permet de faire pivoter le sous-niveau en utilisant la touche de rotation.",
   "sable-barehanded.config.physics.grab_stabilization": "Stabilisation de Saisie",
-  "sable-barehanded.config.physics.grab_stabilization.tooltip": "Intensité de stabilisation (0.0 à 1.0). Force l'objet à ne pas se balancer.",
+  "sable-barehanded.config.physics.grab_stabilization.tooltip": "Intensité de stabilisation (0.0 à 1.0). Force le sous-niveau à ignorer le couple lors du transport.",
   "sable-barehanded.config.physics.rotation_stabilization": "Stabilisation de Rotation",
   "sable-barehanded.config.physics.rotation_stabilization.tooltip": "Intensité de stabilisation pendant la rotation. Permet un contrôle précis.",
   "sable-barehanded.config.physics.prevent_fast_rotations": "Empêcher les Rotations Rapides",
   "sable-barehanded.config.physics.prevent_fast_rotations.tooltip": "Limite la vitesse de rotation maximale pour éviter les rotations erratiques.",
-  "sable-barehanded.config.physics.pivot_at_grab_point": "Pivot au Point de Saisie",
-  "sable-barehanded.config.physics.pivot_at_grab_point.tooltip": "Si activé, les objets pivotent autour du bloc exact saisi.",
   "sable-barehanded.config.physics.max_rotation_speed": "Vitesse Max de Rotation",
 
   "sable-barehanded.config.physics.creative_super_strength": "Super Force en Créatif",
@@ -54,10 +52,17 @@
   "sable-barehanded.config.physics.ignore_collisions_other_players": "Ignorer les Autres Joueurs",
   "sable-barehanded.config.physics.ignore_collisions_entities": "Ignorer les Entités",
   "sable-barehanded.config.physics.ignore_collisions_everything": "Ignorer Toutes les Collisions",
-  "sable-barehanded.config.physics.ignore_collisions_everything.tooltip": "Attention : utilise le mode téléportation, le sous-niveau pourrait tomber du monde !",
+  "sable-barehanded.config.physics.ignore_collisions_everything.tooltip": "ATTENTION : utilise le mode téléportation, le sous-niveau pourrait tomber du monde !",
 
-  "sable-barehanded.config.client.rotation_sensitivity": "Sensibilité de Rotation",
-  "sable-barehanded.config.client.invert_rotation": "Inverser la Rotation",
-  "sable-barehanded.config.client.invert_rotation.tooltip": "Inverse les axes de rotation.",
-  "sable-barehanded.config.client.anim_priority": "Priorité d'Animation"
+  "sable-barehanded.config.client.vertical_rotation_sensitivity": "Sensibilité de Rotation Verticale",
+  "sable-barehanded.config.client.horizontal_rotation_sensitivity": "Sensibilité de Rotation Horizontale",
+  "sable-barehanded.config.client.invert_vertical_rotation": "Inverser la Rotation Verticale",
+  "sable-barehanded.config.client.invert_vertical_rotation.tooltip": "Inverse le tangage (axe Y) pendant la rotation.",
+  "sable-barehanded.config.client.invert_horizontal_rotation": "Inverser la Rotation Horizontale",
+  "sable-barehanded.config.client.invert_horizontal_rotation.tooltip": "Inverse le lacet (axe X) pendant la rotation.",
+  "sable-barehanded.config.client.rotate_around_center": "Pivoter autour du Centre",
+  "sable-barehanded.config.client.rotate_around_center.tooltip": "Si activé, la rotation d'un objet se fera autour de son centre de masse, évitant de grands balancements dans les espaces étroits.",
+  "key.sable-barehanded.pivot": "Pivot de Rotation Alternatif",
+  "sable-barehanded.config.client.prevent_movement_while_rotating": "Empêcher le Mouvement pendant la Rotation",
+  "sable-barehanded.config.client.prevent_movement_while_rotating.tooltip": "Verrouille les mouvements du joueur (ZQSD/Sauter/S'accroupir) tant que la touche de rotation est maintenue pour éviter les chutes accidentelles.",
 }
