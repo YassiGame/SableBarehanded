@@ -79,7 +79,7 @@ public class NeoForgeGrabConfig {
                     .defineInRange("barehandedAssemblySpeedMultiplier", 1.0, 0.1, 10.0);
 
             barehandedAssemblyMaxDistance = builder.translation("sable-barehanded.config.physics.barehanded_assembly_max_distance")
-                    .defineInRange("barehandedAssemblyMaxDistance", 2.5, 1.0, 10.0);
+                    .defineInRange("barehandedAssemblyMaxDistance", 1.75, 1.0, 10.0);
 
             builder.pop();
 

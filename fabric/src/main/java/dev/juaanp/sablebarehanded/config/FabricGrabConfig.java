@@ -49,7 +49,7 @@ public class FabricGrabConfig {
 
         public boolean enableBarehandedAssembly = true;
         public double barehandedAssemblySpeedMultiplier = 1.0;
-        public double barehandedAssemblyMaxDistance = 2.5;
+        public double barehandedAssemblyMaxDistance = 1.75;
     }
 
     public static class Client {

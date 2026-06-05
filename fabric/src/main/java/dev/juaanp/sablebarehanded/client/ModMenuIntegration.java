@@ -70,7 +70,7 @@ public class ModMenuIntegration implements ModMenuApi {
                     .setSaveConsumer(v -> FabricGrabConfig.COMMON.barehandedAssemblySpeedMultiplier = v).build());
 
             mechanics.add(entryBuilder.startDoubleField(Component.translatable("sable-barehanded.config.physics.barehanded_assembly_max_distance"), FabricGrabConfig.COMMON.barehandedAssemblyMaxDistance)
-                    .setDefaultValue(2.5).setMin(1.0).setMax(10.0)
+                    .setDefaultValue(1.75).setMin(1.0).setMax(10.0)
                     .setTooltip(Component.translatable("sable-barehanded.config.physics.barehanded_assembly_max_distance.tooltip"))
                     .setSaveConsumer(v -> FabricGrabConfig.COMMON.barehandedAssemblyMaxDistance = v).build());
 
