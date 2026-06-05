@@ -2,11 +2,14 @@ package dev.juaanp.sablebarehanded.client;
 
 import dev.juaanp.sablebarehanded.mixin.accesor.MultiPlayerGameModeAccessor;
 import dev.juaanp.sablebarehanded.platform.Services;
+import dev.juaanp.sablebarehanded.util.AssemblyBehaviorHelper;
 import dev.ryanhcode.sable.Sable;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
@@ -61,7 +64,8 @@ public class ClientGrabTracker {
                 net.minecraft.world.phys.Vec3 blockCenter = net.minecraft.world.phys.Vec3.atCenterOf(currentPos);
                 double distanceToHit = mc.player.getEyePosition().distanceTo(blockCenter);
 
-                boolean isUnbreakable = mc.level.getBlockState(currentPos).getDestroySpeed(mc.level, currentPos) < 0.0F;
+                net.minecraft.world.level.block.state.BlockState state = mc.level.getBlockState(currentPos);
+                boolean isIgnored = dev.juaanp.sablebarehanded.util.AssemblyBehaviorHelper.isIgnored(mc.level, currentPos, state);
 
                 Vector3d hitPos = new Vector3d(blockHit.getLocation().x, blockHit.getLocation().y, blockHit.getLocation().z);
 
@@ -79,29 +83,34 @@ public class ClientGrabTracker {
                     if (mc.gameMode != null) mc.gameMode.stopDestroyBlock();
                     resetAssemblyCharge();
 
-                } else if (isSneaking && Services.CONFIG.enableBarehandedAssembly() && distanceToHit <= Services.CONFIG.barehandedAssemblyMaxDistance() && !isUnbreakable && !preventDueToMining) {
+                } else if (isSneaking && Services.CONFIG.enableBarehandedAssembly() && distanceToHit <= Services.CONFIG.barehandedAssemblyMaxDistance() && !isIgnored && !preventDueToMining) {
 
                     if (assemblyTargetPos == null || !assemblyTargetPos.equals(currentPos)) {
                         assemblyTargetPos = currentPos;
                         assemblyChargeTicks = 1;
 
-                        net.minecraft.world.level.block.state.BlockState state = mc.level.getBlockState(currentPos);
+                        boolean isCreativeSuper = mc.player.isCreative() && Services.CONFIG.creativeSuperStrength();
 
-                        float progressPerTick = state.getDestroyProgress(mc.player, mc.level, currentPos);
-
-                        if (progressPerTick <= 0.0F) {
-                            currentRequiredAssemblyTicks = Integer.MAX_VALUE;
+                        if (isCreativeSuper) {
+                            currentRequiredAssemblyTicks = 1;
+                        }
+                        else if (dev.juaanp.sablebarehanded.util.AssemblyBehaviorHelper.isFastLift(mc.level, currentPos, state)) {
+                            currentRequiredAssemblyTicks = 2;
                         } else {
-                            int vanillaTicks = (int) Math.ceil(1.0F / progressPerTick);
+                            float progressPerTick = state.getDestroyProgress(mc.player, mc.level, currentPos);
 
-                            double strengthMulti = 1.0;
-                            var strengthEffect = mc.player.getEffect(net.minecraft.world.effect.MobEffects.DAMAGE_BOOST);
-                            if (strengthEffect != null) {
-                                int amp = strengthEffect.getAmplifier();
-                                strengthMulti = amp == 0 ? Services.CONFIG.strength1Multiplier() : Services.CONFIG.strength2Multiplier();
+                            if (progressPerTick <= 0.0F) {
+                                currentRequiredAssemblyTicks = Integer.MAX_VALUE;
+                            } else {
+                                int vanillaTicks = (int) Math.ceil(1.0F / progressPerTick);
+                                double strengthMulti = 1.0;
+                                var strengthEffect = mc.player.getEffect(net.minecraft.world.effect.MobEffects.DAMAGE_BOOST);
+                                if (strengthEffect != null) {
+                                    int amp = strengthEffect.getAmplifier();
+                                    strengthMulti = amp == 0 ? Services.CONFIG.strength1Multiplier() : Services.CONFIG.strength2Multiplier();
+                                }
+                                currentRequiredAssemblyTicks = (int) Math.max(1, (vanillaTicks / strengthMulti) / Services.CONFIG.barehandedAssemblySpeedMultiplier());
                             }
-
-                            currentRequiredAssemblyTicks = (int) Math.max(1, (vanillaTicks / strengthMulti) / Services.CONFIG.barehandedAssemblySpeedMultiplier());
                         }
                     } else {
                         assemblyChargeTicks++;
@@ -204,9 +213,11 @@ public class ClientGrabTracker {
                 double distanceToHit = mc.player.getEyePosition().distanceTo(blockCenter);
                 boolean isUnbreakable = mc.level.getBlockState(currentPos).getDestroySpeed(mc.level, currentPos) < 0.0F;
 
-                if (distanceToHit <= Services.CONFIG.barehandedAssemblyMaxDistance() && !isUnbreakable) {
-                    org.joml.Vector3d hitPos = new org.joml.Vector3d(blockHit.getLocation().x, blockHit.getLocation().y, blockHit.getLocation().z);
-                    if (dev.ryanhcode.sable.Sable.HELPER.getContaining(mc.level, hitPos) == null) {
+                BlockState targetState = mc.level.getBlockState(currentPos);
+
+                if (distanceToHit <= Services.CONFIG.barehandedAssemblyMaxDistance() && !AssemblyBehaviorHelper.isIgnored(mc.level, currentPos, targetState)) {
+                    Vector3d hitPos = new Vector3d(blockHit.getLocation().x, blockHit.getLocation().y, blockHit.getLocation().z);
+                    if (Sable.HELPER.getContaining(mc.level, hitPos) == null) {
                         return true;
                     }
                 }

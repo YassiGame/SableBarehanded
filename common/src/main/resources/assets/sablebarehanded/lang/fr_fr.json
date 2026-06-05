@@ -65,4 +65,17 @@
   "key.sable-barehanded.pivot": "Pivot de Rotation Alternatif",
   "sable-barehanded.config.client.prevent_movement_while_rotating": "Empêcher le Mouvement pendant la Rotation",
   "sable-barehanded.config.client.prevent_movement_while_rotating.tooltip": "Verrouille les mouvements du joueur (ZQSD/Sauter/S'accroupir) tant que la touche de rotation est maintenue pour éviter les chutes accidentelles.",
+
+  "sable-barehanded.config.client.prevent_assembly_when_mining": "Empêcher le détachement pendant le minage",
+  "sable-barehanded.config.client.prevent_assembly_when_mining.tooltip": "Si activé, tenter de détacher un bloc pendant qu'il est déjà en cours de minage n'interrompra pas le processus.",
+  "sable-barehanded.config.client.barehanded_assembly_mining_threshold": "Seuil de minage pour le détachement",
+  "sable-barehanded.config.client.barehanded_assembly_mining_threshold.tooltip": "Progression de minage requise (0.0 à 1.0) pour empêcher le détachement du bloc. Exemple : 0.05 signifie 5% miné.",
+
+  "sable-barehanded.config.physics.enable_barehanded_assembly": "Activer le Détachement de Blocs",
+  "sable-barehanded.config.physics.enable_barehanded_assembly.tooltip": "Permet de détacher des blocs en sous-niveaux en s'accroupissant et en maintenant les deux clics de souris.",
+  "sable-barehanded.config.physics.barehanded_assembly_max_distance": "Distance Maximale de Détachement",
+  "sable-barehanded.config.physics.barehanded_assembly_max_distance.tooltip": "Distance maximale autorisée entre le joueur et le bloc pour le détacher.",
+
+  "sable-barehanded.config.physics.barehanded_assembly_speed_multiplier": "Multiplicateur de Vitesse de Détachement",
+  "sable-barehanded.config.physics.barehanded_assembly_speed_multiplier.tooltip": "Multiplie le temps nécessaire pour détacher un bloc normal qui n'est pas un sous-niveau."
 }

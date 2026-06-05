@@ -65,4 +65,17 @@
   "key.sable-barehanded.pivot": "备用旋转枢轴",
   "sable-barehanded.config.client.prevent_movement_while_rotating": "旋转时防止移动",
   "sable-barehanded.config.client.prevent_movement_while_rotating.tooltip": "在按住旋转键时锁定玩家移动（WASD/跳跃/潜行），以防止意外跌落。",
+
+  "sable-barehanded.config.client.prevent_assembly_when_mining": "挖掘时防止方块分离",
+  "sable-barehanded.config.client.prevent_assembly_when_mining.tooltip": "如果启用，在挖掘方块时尝试分离它将不会中断挖掘过程。",
+  "sable-barehanded.config.client.barehanded_assembly_mining_threshold": "挖掘分离阈值",
+  "sable-barehanded.config.client.barehanded_assembly_mining_threshold.tooltip": "防止分离方块所需的挖掘进度（0.0 到 1.0）。例如：0.05 表示已挖掘 5%。",
+
+  "sable-barehanded.config.physics.enable_barehanded_assembly": "启用方块分离",
+  "sable-barehanded.config.physics.enable_barehanded_assembly.tooltip": "允许通过潜行并同时按住鼠标左右键将方块分离为子级别。",
+  "sable-barehanded.config.physics.barehanded_assembly_max_distance": "最大分离距离",
+  "sable-barehanded.config.physics.barehanded_assembly_max_distance.tooltip": "允许玩家与方块之间进行分离的最大距离。",
+
+  "sable-barehanded.config.physics.barehanded_assembly_speed_multiplier": "方块分离速度倍率",
+  "sable-barehanded.config.physics.barehanded_assembly_speed_multiplier.tooltip": "成倍增加分离普通非子级别方块所需的时间。"
 }

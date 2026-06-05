@@ -68,8 +68,14 @@
 
   "sable-barehanded.config.physics.enable_barehanded_assembly": "Habilitar Extracción Manual",
   "sable-barehanded.config.physics.enable_barehanded_assembly.tooltip": "Permite arrancar bloques del mundo como subniveles manteniendo ambos clics mientras estás agachado.",
-  "sable-barehanded.config.physics.barehanded_assembly_ticks": "Tiempo de Extracción (Ticks)",
-  "sable-barehanded.config.physics.barehanded_assembly_ticks.tooltip": "Tiempo necesario para arrancar el bloque. 20 ticks = 1 segundo.",
   "sable-barehanded.config.physics.barehanded_assembly_max_distance": "Distancia Máxima de Extracción",
-  "sable-barehanded.config.physics.barehanded_assembly_max_distance.tooltip": "Distancia máxima permitida entre el jugador y el bloque para poder arrancarlo."
+  "sable-barehanded.config.physics.barehanded_assembly_max_distance.tooltip": "Distancia máxima permitida entre el jugador y el bloque para poder arrancarlo.",
+
+  "sable-barehanded.config.client.prevent_assembly_when_mining": "Prevenir Extracción al Minar",
+  "sable-barehanded.config.client.prevent_assembly_when_mining.tooltip": "Si está activado, intentar arrancar un bloque que ya estabas minando no interrumpirá el progreso de minado.",
+  "sable-barehanded.config.client.barehanded_assembly_mining_threshold": "Tolerancia de Minado para Extracción",
+  "sable-barehanded.config.client.barehanded_assembly_mining_threshold.tooltip": "Progreso necesario de minado (0.0 a 1.0) para cancelar la extracción. Ejemplo: 0.05 significa un 5% minado.",
+
+  "sable-barehanded.config.physics.barehanded_assembly_speed_multiplier": "Multiplicador de Velocidad de Extracción",
+  "sable-barehanded.config.physics.barehanded_assembly_speed_multiplier.tooltip": "Multiplica el tiempo necesario para extraer un bloque normal que no sea un subnivel."
 }

@@ -64,5 +64,18 @@
   "sable-barehanded.config.client.rotate_around_center.tooltip": "If enabled, rotating a held object will pivot around its center of mass, preventing large swings in tight spaces.",
   "key.sable-barehanded.pivot": "Alternative Rotation Pivot",
   "sable-barehanded.config.client.prevent_movement_while_rotating": "Prevent Movement While Rotating",
-  "sable-barehanded.config.client.prevent_movement_while_rotating.tooltip": "Locks player movement (WASD/Jump/Sneak) while the rotation key is held to prevent accidental falls."
+  "sable-barehanded.config.client.prevent_movement_while_rotating.tooltip": "Locks player movement (WASD/Jump/Sneak) while the rotation key is held to prevent accidental falls.",
+  "sable-barehanded.config.client.prevent_assembly_when_mining": "Prevent Block Detach while Mining",
+  "sable-barehanded.config.client.prevent_assembly_when_mining.tooltip": "If enabled, attempting to detach a block while already mining it will not interrupt the mining process.",
+  "sable-barehanded.config.client.barehanded_assembly_mining_threshold": "Mining Block Detach Threshold",
+  "sable-barehanded.config.client.barehanded_assembly_mining_threshold.tooltip": "The mining progress required (0.0 to 1.0) to prevent detaching the block. Example: 0.05 means 5% mined.",
+
+
+  "sable-barehanded.config.physics.enable_barehanded_assembly": "Enable Block Detach",
+  "sable-barehanded.config.physics.enable_barehanded_assembly.tooltip": "Allows detaching blocks into sub-levels by sneaking and holding both mouse clicks.",
+  "sable-barehanded.config.physics.barehanded_assembly_max_distance": "Max Detach Distance",
+  "sable-barehanded.config.physics.barehanded_assembly_max_distance.tooltip": "Maximum distance allowed between the player and the block to detach it.",
+
+  "sable-barehanded.config.physics.barehanded_assembly_speed_multiplier": "Block Detach Speed Multiplier",
+  "sable-barehanded.config.physics.barehanded_assembly_speed_multiplier.tooltip": "Multiply the time it takes to detach a regular non-sub-level block"
 }

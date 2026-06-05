@@ -65,4 +65,17 @@
   "key.sable-barehanded.pivot": "Альтернативная ось вращения",
   "sable-barehanded.config.client.prevent_movement_while_rotating": "Предотвращать движение при вращении",
   "sable-barehanded.config.client.prevent_movement_while_rotating.tooltip": "Блокирует передвижение игрока (WASD/Прыжок/Приседание) при удержании клавиши вращения, чтобы предотвратить случайные падения.",
+
+  "sable-barehanded.config.client.prevent_assembly_when_mining": "Предотвращать отделение блока при добыче",
+  "sable-barehanded.config.client.prevent_assembly_when_mining.tooltip": "Если включено, попытка отделить блок во время его добычи не прервет процесс добычи.",
+  "sable-barehanded.config.client.barehanded_assembly_mining_threshold": "Порог добычи для отделения",
+  "sable-barehanded.config.client.barehanded_assembly_mining_threshold.tooltip": "Прогресс добычи (от 0.0 до 1.0), необходимый для предотвращения отделения блока. Например: 0.05 означает 5% добычи.",
+
+  "sable-barehanded.config.physics.enable_barehanded_assembly": "Включить отделение блоков",
+  "sable-barehanded.config.physics.enable_barehanded_assembly.tooltip": "Позволяет отделять блоки в подуровни, удерживая клавишу приседания и оба клика мыши.",
+  "sable-barehanded.config.physics.barehanded_assembly_max_distance": "Макс. дистанция отделения",
+  "sable-barehanded.config.physics.barehanded_assembly_max_distance.tooltip": "Максимально допустимое расстояние между игроком и блоком для его отделения.",
+
+  "sable-barehanded.config.physics.barehanded_assembly_speed_multiplier": "Множитель скорости отделения блока",
+  "sable-barehanded.config.physics.barehanded_assembly_speed_multiplier.tooltip": "Умножает время, необходимое для отделения обычного блока (не подуровня)."
 }

@@ -65,4 +65,17 @@
   "key.sable-barehanded.pivot": "Alternativer Rotationsdrehpunkt",
   "sable-barehanded.config.client.prevent_movement_while_rotating": "Bewegung während der Rotation verhindern",
   "sable-barehanded.config.client.prevent_movement_while_rotating.tooltip": "Sperrt die Spielerbewegung (WASD/Springen/Schleichen), während die Rotationstaste gedrückt gehalten wird, um versehentliches Herunterfallen zu verhindern.",
+
+  "sable-barehanded.config.physics.enable_barehanded_assembly": "Blockablösung aktivieren",
+  "sable-barehanded.config.physics.enable_barehanded_assembly.tooltip": "Erlaubt das Ablösen von Blöcken in Sublevel durch Schleichen und gleichzeitiges Gedrückthalten beider Maustasten.",
+  "sable-barehanded.config.physics.barehanded_assembly_max_distance": "Maximale Ablösungsdistanz",
+  "sable-barehanded.config.physics.barehanded_assembly_max_distance.tooltip": "Maximale erlaubte Distanz zwischen Spieler und Block, um diesen abzulösen.",
+
+  "sable-barehanded.config.client.prevent_assembly_when_mining": "Blockablösung beim Abbau verhindern",
+  "sable-barehanded.config.client.prevent_assembly_when_mining.tooltip": "Wenn aktiviert, unterbricht der Versuch, einen Block abzulösen, während er bereits abgebaut wird, nicht den Abbauprozess.",
+  "sable-barehanded.config.client.barehanded_assembly_mining_threshold": "Schwellenwert für Blockablösung beim Abbau",
+  "sable-barehanded.config.client.barehanded_assembly_mining_threshold.tooltip": "Der erforderliche Abbaufortschritt (0.0 bis 1.0), um das Ablösen des Blocks zu verhindern. Beispiel: 0.05 bedeutet 5% abgebaut.",
+
+  "sable-barehanded.config.physics.barehanded_assembly_speed_multiplier": "Blockablösungs-Geschwindigkeitsmultiplikator",
+  "sable-barehanded.config.physics.barehanded_assembly_speed_multiplier.tooltip": "Multipliziert die Zeit, die benötigt wird, um einen normalen Block (kein Sublevel) abzulösen."
 }
