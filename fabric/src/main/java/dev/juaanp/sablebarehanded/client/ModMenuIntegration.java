@@ -30,7 +30,7 @@ public class ModMenuIntegration implements ModMenuApi {
                     .setDefaultValue(120.0).setMin(1.0).setMax(10000000.0).setSaveConsumer(v -> FabricGrabConfig.COMMON.maxForce = v).build());
 
             mechanics.add(entryBuilder.startDoubleField(Component.translatable("sable-barehanded.config.physics.min_distance"), FabricGrabConfig.COMMON.minDistance)
-                    .setDefaultValue(2.0).setMin(0.1).setMax(10.0).setSaveConsumer(v -> FabricGrabConfig.COMMON.minDistance = v).build());
+                    .setDefaultValue(2.0).setMin(0.1).setMax(1000.0).setSaveConsumer(v -> FabricGrabConfig.COMMON.minDistance = v).build());
 
             mechanics.add(entryBuilder.startDoubleField(Component.translatable("sable-barehanded.config.physics.grab_stabilization"), FabricGrabConfig.COMMON.grabStabilization)
                     .setDefaultValue(0.01).setMin(0.0).setMax(1.0).setSaveConsumer(v -> FabricGrabConfig.COMMON.grabStabilization = v).build());

@@ -45,7 +45,7 @@ public class NeoForgeGrabConfig {
                     .defineInRange("maxForce", 120.0, 1.0, 10000000.0);
 
             minDistance = builder.translation("sable-barehanded.config.physics.min_distance")
-                    .defineInRange("minDistance", 2.0, 0.1, 10.0);
+                    .defineInRange("minDistance", 2.0, 0.1, 1000.0);
 
             grabStabilization = builder.translation("sable-barehanded.config.physics.grab_stabilization")
                     .defineInRange("grabStabilization", 0.01, 0.0, 1.0);
