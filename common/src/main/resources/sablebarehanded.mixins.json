@@ -1,0 +1,21 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "dev.juaanp.sablebarehanded.mixin",
+  "refmap": "${mod_id}.refmap.json",
+  "compatibilityLevel": "JAVA_18",
+  "mixins": [
+    "MixinSubLevelEntityCollision"
+  ],
+  "client": [
+    "MixinMultiPlayerGameMode",
+    "MixinMouseHandler",
+    "MixinPlayerModel",
+    "MixinItemInHandRenderer"
+  ],
+  "server": [],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
+
