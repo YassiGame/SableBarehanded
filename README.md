@@ -1,6 +1,6 @@
 # Sable: Barehanded
 
-### Grab and rotate Sable sub-levels barehanded.
+### Grab and rotate Sable sub-levels using your bare hands.
 
 ## For Developers
 
