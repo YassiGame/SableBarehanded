@@ -9,6 +9,7 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 
 public class SableBarehandedFabricClient implements ClientModInitializer {
 
@@ -16,6 +17,7 @@ public class SableBarehandedFabricClient implements ClientModInitializer {
     public void onInitializeClient() {
 
         KeyBindingHelper.registerKeyBinding(KeyBindings.ROTATE_KEY);
+        KeyBindingHelper.registerKeyBinding(KeyBindings.PIVOT_KEY);
 
         ClientPlayNetworking.registerGlobalReceiver(StartGrabbingAnimationPacket.TYPE, (payload, context) -> {
             context.client().execute(() -> ClientPayloadHandler.handleStartGrabbingAnimation(payload));
@@ -37,12 +39,19 @@ public class SableBarehandedFabricClient implements ClientModInitializer {
             ClientGrabTracker.clientTick();
             KeyBindings.clientTick();
 
-            if (ClientGrabTracker.pendingYaw != 0.0 || ClientGrabTracker.pendingPitch != 0.0) {
-                Services.NETWORK.sendRotateGrab(ClientGrabTracker.pendingYaw, ClientGrabTracker.pendingPitch);
+            boolean isRotateKeyDown = KeyBindings.ROTATE_KEY.isDown();
+
+            if (isRotateKeyDown || ClientGrabTracker.pendingYaw != 0.0 || ClientGrabTracker.pendingPitch != 0.0) {
+                boolean useCenter = Services.CONFIG.rotateAroundCenter() ^ KeyBindings.PIVOT_KEY.isDown();
+                Services.NETWORK.sendRotateGrab(ClientGrabTracker.pendingYaw, ClientGrabTracker.pendingPitch, useCenter);
 
                 ClientGrabTracker.pendingYaw = 0.0;
                 ClientGrabTracker.pendingPitch = 0.0;
             }
+        });
+
+        HudRenderCallback.EVENT.register((graphics, tickDelta) -> {
+            ClientGrabTracker.renderSableOverlay(graphics);
         });
     }
 }

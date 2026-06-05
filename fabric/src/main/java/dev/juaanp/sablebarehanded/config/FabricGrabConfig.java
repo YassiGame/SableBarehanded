@@ -22,13 +22,12 @@ public class FabricGrabConfig {
 
         public boolean enableRotation = true;
         public double grabStabilization = 0.01;
-        public double rotationStabilization = 0.1;
+        public double rotationStabilization = 0.5;
         public boolean preventFastRotations = true;
-        public boolean pivotAtGrabPoint = true;
         public boolean creativeSuperStrength = true;
 
-        public double strength1Multiplier = 1.5;
-        public double strength2Multiplier = 2.0;
+        public double strength1Multiplier = 2.0;
+        public double strength2Multiplier = 4.0;
 
         public double rotationMassDampingFactor = 0.02;
         public double tensionSuspendThreshold = 3.5;
@@ -44,14 +43,18 @@ public class FabricGrabConfig {
         public boolean ignoreCollisionsGrabSelf = true;
 
         public boolean ignoreCollisionsRotationEverything = false;
-        public boolean ignoreCollisionsRotationEntities = false;
-        public boolean ignoreCollisionsRotationOtherPlayers = false;
-        public boolean ignoreCollisionsRotationSelf = false;
+        public boolean ignoreCollisionsRotationEntities = true;
+        public boolean ignoreCollisionsRotationOtherPlayers = true;
+        public boolean ignoreCollisionsRotationSelf = true;
     }
 
     public static class Client {
-        public double rotationSensitivity = 0.7;
-        public boolean invertRotation = false;
+        public double verticalRotationSensitivity = 0.5;
+        public double horizontalRotationSensitivity = 0.5;
+        public boolean invertVerticalRotation = false;
+        public boolean invertHorizontalRotation = false;
+        public boolean rotateAroundCenter = false;
+        public boolean preventMovementWhileRotating = true;
     }
 
     public static Common COMMON = new Common();

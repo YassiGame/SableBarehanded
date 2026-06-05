@@ -41,7 +41,7 @@ public class NeoForgePacketHandlers {
     public static void handleRotateGrab(RotateGrabPacket packet, IPayloadContext context) {
         context.enqueueWork(() -> {
             if (context.player() != null) {
-                GrabPhysicsManager.applyRotation(context.player(), packet.deltaX(), packet.deltaY());
+                GrabPhysicsManager.applyRotation(context.player(), packet.deltaX(), packet.deltaY(), packet.rotateAroundCenter());
             }
         });
     }

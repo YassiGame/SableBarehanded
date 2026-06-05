@@ -15,7 +15,6 @@ public class NeoForgeGrabConfig {
         public final ModConfigSpec.DoubleValue grabStabilization;
         public final ModConfigSpec.DoubleValue rotationStabilization;
         public final ModConfigSpec.BooleanValue preventFastRotations;
-        public final ModConfigSpec.BooleanValue pivotAtGrabPoint;
         public final ModConfigSpec.BooleanValue creativeSuperStrength;
         public final ModConfigSpec.DoubleValue strength1Multiplier;
         public final ModConfigSpec.DoubleValue strength2Multiplier;
@@ -52,7 +51,7 @@ public class NeoForgeGrabConfig {
                     .defineInRange("grabStabilization", 0.01, 0.0, 1.0);
 
             rotationStabilization = builder.translation("sable-barehanded.config.physics.rotation_stabilization")
-                    .defineInRange("rotationStabilization", 0.1, 0.0, 1.0);
+                    .defineInRange("rotationStabilization", 0.5, 0.0, 1.0);
 
             enableRotation = builder.translation("sable-barehanded.config.physics.enable_rotation")
                     .define("enableRotation", true);
@@ -63,14 +62,11 @@ public class NeoForgeGrabConfig {
             preventFastRotations = builder.translation("sable-barehanded.config.physics.prevent_fast_rotations")
                     .define("preventFastRotations", true);
 
-            pivotAtGrabPoint = builder.translation("sable-barehanded.config.physics.pivot_at_grab_point")
-                    .define("pivotAtGrabPoint", true);
-
             creativeSuperStrength = builder.translation("sable-barehanded.config.physics.creative_super_strength")
                     .define("creativeSuperStrength", true);
 
-            strength1Multiplier = builder.translation("sable-barehanded.config.physics.strength_1_multiplier").defineInRange("strength1Multiplier", 1.5, 1.0, 100.0);
-            strength2Multiplier = builder.translation("sable-barehanded.config.physics.strength_2_multiplier").defineInRange("strength2Multiplier", 2.0, 1.0, 100.0);
+            strength1Multiplier = builder.translation("sable-barehanded.config.physics.strength_1_multiplier").defineInRange("strength1Multiplier", 2.0, 1.0, 100.0);
+            strength2Multiplier = builder.translation("sable-barehanded.config.physics.strength_2_multiplier").defineInRange("strength2Multiplier", 4.0, 1.0, 100.0);
 
             builder.pop();
 
@@ -93,13 +89,13 @@ public class NeoForgeGrabConfig {
             builder.translation("sable-barehanded.config.physics.rotation_collisions").push("rotation_collisions");
 
             ignoreCollisionsRotationSelf = builder.translation("sable-barehanded.config.physics.ignore_collisions_self")
-                    .define("ignoreCollisionsRotationSelf", false);
+                    .define("ignoreCollisionsRotationSelf", true);
 
             ignoreCollisionsRotationOtherPlayers = builder.translation("sable-barehanded.config.physics.ignore_collisions_other_players")
-                    .define("ignoreCollisionsRotationOtherPlayers", false);
+                    .define("ignoreCollisionsRotationOtherPlayers", true);
 
             ignoreCollisionsRotationEntities = builder.translation("sable-barehanded.config.physics.ignore_collisions_entities")
-                    .define("ignoreCollisionsRotationEntities", false);
+                    .define("ignoreCollisionsRotationEntities", true);
 
             ignoreCollisionsRotationEverything = builder.translation("sable-barehanded.config.physics.ignore_collisions_everything")
                     .define("ignoreCollisionsRotationEverything", false);
@@ -144,15 +140,31 @@ public class NeoForgeGrabConfig {
     }
 
     public static class Client {
-        public final ModConfigSpec.DoubleValue rotationSensitivity;
-        public final ModConfigSpec.BooleanValue invertRotation;
+        public final ModConfigSpec.DoubleValue verticalRotationSensitivity;
+        public final ModConfigSpec.DoubleValue horizontalRotationSensitivity;
+        public final ModConfigSpec.BooleanValue invertVerticalRotation;
+        public final ModConfigSpec.BooleanValue invertHorizontalRotation;
+        public final ModConfigSpec.BooleanValue rotateAroundCenter;
+        public final ModConfigSpec.BooleanValue preventMovementWhileRotating;
 
         public Client(ModConfigSpec.Builder builder) {
-            rotationSensitivity = builder.translation("sable-barehanded.config.client.rotation_sensitivity")
-                    .defineInRange("rotationSensitivity", 0.7, 0.1, 1.0);
+            verticalRotationSensitivity = builder.translation("sable-barehanded.config.client.vertical_rotation_sensitivity")
+                    .defineInRange("verticalRotationSensitivity", 0.5, 0.1, 1.0);
 
-            invertRotation = builder.translation("sable-barehanded.config.client.invert_rotation")
-                    .define("invertRotation", false);
+            horizontalRotationSensitivity = builder.translation("sable-barehanded.config.client.horizontal_rotation_sensitivity")
+                    .defineInRange("horizontalRotationSensitivity", 0.5, 0.1, 1.0);
+
+            invertVerticalRotation = builder.translation("sable-barehanded.config.client.invert_vertical_rotation")
+                    .define("invertVerticalRotation", false);
+
+            invertHorizontalRotation = builder.translation("sable-barehanded.config.client.invert_horizontal_rotation")
+                    .define("invertHorizontalRotation", false);
+
+            rotateAroundCenter = builder.translation("sable-barehanded.config.client.rotate_around_center")
+                    .define("rotateAroundCenter", false);
+
+            preventMovementWhileRotating = builder.translation("sable-barehanded.config.client.prevent_movement_while_rotating")
+                    .define("preventMovementWhileRotating", true);
         }
     }
 
@@ -181,7 +193,6 @@ public class NeoForgeGrabConfig {
     public static double grabStabilization() { return COMMON.grabStabilization.get(); }
     public static double rotationStabilization() { return COMMON.rotationStabilization.get(); }
     public static boolean preventFastRotations() { return COMMON.preventFastRotations.get(); }
-    public static boolean pivotAtGrabPoint() { return COMMON.pivotAtGrabPoint.get(); }
     public static boolean creativeSuperStrength() { return COMMON.creativeSuperStrength.get(); }
     public static double strength1Multiplier() { return COMMON.strength1Multiplier.get(); }
     public static double strength2Multiplier() { return COMMON.strength2Multiplier.get(); }
@@ -204,6 +215,10 @@ public class NeoForgeGrabConfig {
     public static boolean ignoreCollisionsRotationOtherPlayers() { return COMMON.ignoreCollisionsRotationOtherPlayers.get(); }
     public static boolean ignoreCollisionsRotationEverything() { return COMMON.ignoreCollisionsRotationEverything.get(); }
 
-    public static double rotationSensitivity() { return CLIENT.rotationSensitivity.get(); }
-    public static boolean invertRotation() { return CLIENT.invertRotation.get(); }
+    public static double verticalRotationSensitivity() { return CLIENT.verticalRotationSensitivity.get(); }
+    public static double horizontalRotationSensitivity() { return CLIENT.horizontalRotationSensitivity.get(); }
+    public static boolean invertVerticalRotation() { return CLIENT.invertVerticalRotation.get(); }
+    public static boolean invertHorizontalRotation() { return CLIENT.invertHorizontalRotation.get(); }
+    public static boolean rotateAroundCenter() { return CLIENT.rotateAroundCenter.get(); }
+    public static boolean preventMovementWhileRotating() { return CLIENT.preventMovementWhileRotating.get(); }
 }

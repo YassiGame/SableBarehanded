@@ -36,7 +36,7 @@ public class ModMenuIntegration implements ModMenuApi {
                     .setDefaultValue(0.01).setMin(0.0).setMax(1.0).setSaveConsumer(v -> FabricGrabConfig.COMMON.grabStabilization = v).build());
 
             mechanics.add(entryBuilder.startDoubleField(Component.translatable("sable-barehanded.config.physics.rotation_stabilization"), FabricGrabConfig.COMMON.rotationStabilization)
-                    .setDefaultValue(0.1).setMin(0.0).setMax(1.0).setSaveConsumer(v -> FabricGrabConfig.COMMON.rotationStabilization = v).build());
+                    .setDefaultValue(0.5).setMin(0.0).setMax(1.0).setSaveConsumer(v -> FabricGrabConfig.COMMON.rotationStabilization = v).build());
 
             mechanics.add(entryBuilder.startBooleanToggle(Component.translatable("sable-barehanded.config.physics.enable_rotation"), FabricGrabConfig.COMMON.enableRotation)
                     .setDefaultValue(true).setSaveConsumer(v -> FabricGrabConfig.COMMON.enableRotation = v).build());
@@ -47,20 +47,17 @@ public class ModMenuIntegration implements ModMenuApi {
             mechanics.add(entryBuilder.startBooleanToggle(Component.translatable("sable-barehanded.config.physics.prevent_fast_rotations"), FabricGrabConfig.COMMON.preventFastRotations)
                     .setDefaultValue(true).setSaveConsumer(v -> FabricGrabConfig.COMMON.preventFastRotations = v).build());
 
-            mechanics.add(entryBuilder.startBooleanToggle(Component.translatable("sable-barehanded.config.physics.pivot_at_grab_point"), FabricGrabConfig.COMMON.pivotAtGrabPoint)
-                    .setDefaultValue(true).setSaveConsumer(v -> FabricGrabConfig.COMMON.pivotAtGrabPoint = v).build());
-
             mechanics.add(entryBuilder.startBooleanToggle(Component.translatable("sable-barehanded.config.physics.creative_super_strength"), FabricGrabConfig.COMMON.creativeSuperStrength)
                     .setDefaultValue(true).setTooltip(Component.translatable("sable-barehanded.config.physics.creative_super_strength.tooltip"))
                     .setSaveConsumer(v -> FabricGrabConfig.COMMON.creativeSuperStrength = v).build());
 
             mechanics.add(entryBuilder.startDoubleField(Component.translatable("sable-barehanded.config.physics.strength_1_multiplier"), FabricGrabConfig.COMMON.strength1Multiplier)
-                    .setDefaultValue(1.5).setMin(1.0).setMax(100.0)
+                    .setDefaultValue(2.0).setMin(1.0).setMax(100.0)
                     .setTooltip(Component.translatable("sable-barehanded.config.physics.strength_multiplier.tooltip"))
                     .setSaveConsumer(v -> FabricGrabConfig.COMMON.strength1Multiplier = v).build());
 
             mechanics.add(entryBuilder.startDoubleField(Component.translatable("sable-barehanded.config.physics.strength_2_multiplier"), FabricGrabConfig.COMMON.strength2Multiplier)
-                    .setDefaultValue(2.0).setMin(1.0).setMax(100.0)
+                    .setDefaultValue(4.0).setMin(1.0).setMax(100.0)
                     .setTooltip(Component.translatable("sable-barehanded.config.physics.strength_multiplier.tooltip"))
                     .setSaveConsumer(v -> FabricGrabConfig.COMMON.strength2Multiplier = v).build());
 
@@ -86,13 +83,13 @@ public class ModMenuIntegration implements ModMenuApi {
             SubCategoryBuilder rotationCollisions = entryBuilder.startSubCategory(Component.translatable("sable-barehanded.config.physics.rotation_collisions"));
 
             rotationCollisions.add(entryBuilder.startBooleanToggle(Component.translatable("sable-barehanded.config.physics.ignore_collisions_self"), FabricGrabConfig.COMMON.ignoreCollisionsRotationSelf)
-                    .setDefaultValue(false).setSaveConsumer(v -> FabricGrabConfig.COMMON.ignoreCollisionsRotationSelf = v).build());
+                    .setDefaultValue(true).setSaveConsumer(v -> FabricGrabConfig.COMMON.ignoreCollisionsRotationSelf = v).build());
 
             rotationCollisions.add(entryBuilder.startBooleanToggle(Component.translatable("sable-barehanded.config.physics.ignore_collisions_other_players"), FabricGrabConfig.COMMON.ignoreCollisionsRotationOtherPlayers)
-                    .setDefaultValue(false).setSaveConsumer(v -> FabricGrabConfig.COMMON.ignoreCollisionsRotationOtherPlayers = v).build());
+                    .setDefaultValue(true).setSaveConsumer(v -> FabricGrabConfig.COMMON.ignoreCollisionsRotationOtherPlayers = v).build());
 
             rotationCollisions.add(entryBuilder.startBooleanToggle(Component.translatable("sable-barehanded.config.physics.ignore_collisions_entities"), FabricGrabConfig.COMMON.ignoreCollisionsRotationEntities)
-                    .setDefaultValue(false).setSaveConsumer(v -> FabricGrabConfig.COMMON.ignoreCollisionsRotationEntities = v).build());
+                    .setDefaultValue(true).setSaveConsumer(v -> FabricGrabConfig.COMMON.ignoreCollisionsRotationEntities = v).build());
 
             rotationCollisions.add(entryBuilder.startBooleanToggle(Component.translatable("sable-barehanded.config.physics.ignore_collisions_everything"), FabricGrabConfig.COMMON.ignoreCollisionsRotationEverything)
                     .setDefaultValue(false).setTooltip(Component.translatable("sable-barehanded.config.physics.ignore_collisions_everything.tooltip"))
@@ -135,12 +132,27 @@ public class ModMenuIntegration implements ModMenuApi {
 
             physics.addEntry(advancedPhysics.build());
 
-            client.addEntry(entryBuilder.startDoubleField(Component.translatable("sable-barehanded.config.client.rotation_sensitivity"), FabricGrabConfig.CLIENT.rotationSensitivity)
-                    .setDefaultValue(0.7).setMin(0.1).setMax(1.0).setSaveConsumer(v -> FabricGrabConfig.CLIENT.rotationSensitivity = v).build());
+            client.addEntry(entryBuilder.startDoubleField(Component.translatable("sable-barehanded.config.client.vertical_rotation_sensitivity"), FabricGrabConfig.CLIENT.verticalRotationSensitivity)
+                    .setDefaultValue(0.5).setMin(0.1).setMax(1.0).setSaveConsumer(v -> FabricGrabConfig.CLIENT.verticalRotationSensitivity = v).build());
 
-            client.addEntry(entryBuilder.startBooleanToggle(Component.translatable("sable-barehanded.config.client.invert_rotation"), FabricGrabConfig.CLIENT.invertRotation)
-                    .setDefaultValue(false).setTooltip(Component.translatable("sable-barehanded.config.client.invert_rotation.tooltip"))
-                    .setSaveConsumer(v -> FabricGrabConfig.CLIENT.invertRotation = v).build());
+            client.addEntry(entryBuilder.startDoubleField(Component.translatable("sable-barehanded.config.client.horizontal_rotation_sensitivity"), FabricGrabConfig.CLIENT.horizontalRotationSensitivity)
+                    .setDefaultValue(0.5).setMin(0.1).setMax(1.0).setSaveConsumer(v -> FabricGrabConfig.CLIENT.horizontalRotationSensitivity = v).build());
+
+            client.addEntry(entryBuilder.startBooleanToggle(Component.translatable("sable-barehanded.config.client.invert_vertical_rotation"), FabricGrabConfig.CLIENT.invertVerticalRotation)
+                    .setDefaultValue(false).setTooltip(Component.translatable("sable-barehanded.config.client.invert_vertical_rotation.tooltip"))
+                    .setSaveConsumer(v -> FabricGrabConfig.CLIENT.invertVerticalRotation = v).build());
+
+            client.addEntry(entryBuilder.startBooleanToggle(Component.translatable("sable-barehanded.config.client.invert_horizontal_rotation"), FabricGrabConfig.CLIENT.invertHorizontalRotation)
+                    .setDefaultValue(false).setTooltip(Component.translatable("sable-barehanded.config.client.invert_horizontal_rotation.tooltip"))
+                    .setSaveConsumer(v -> FabricGrabConfig.CLIENT.invertHorizontalRotation = v).build());
+
+            client.addEntry(entryBuilder.startBooleanToggle(Component.translatable("sable-barehanded.config.client.rotate_around_center"), FabricGrabConfig.CLIENT.rotateAroundCenter)
+                    .setDefaultValue(false).setTooltip(Component.translatable("sable-barehanded.config.client.rotate_around_center.tooltip"))
+                    .setSaveConsumer(v -> FabricGrabConfig.CLIENT.rotateAroundCenter = v).build());
+
+            client.addEntry(entryBuilder.startBooleanToggle(Component.translatable("sable-barehanded.config.client.prevent_movement_while_rotating"), FabricGrabConfig.CLIENT.preventMovementWhileRotating)
+                    .setDefaultValue(true).setTooltip(Component.translatable("sable-barehanded.config.client.prevent_movement_while_rotating.tooltip"))
+                    .setSaveConsumer(v -> FabricGrabConfig.CLIENT.preventMovementWhileRotating = v).build());
 
             return builder.build();
         };

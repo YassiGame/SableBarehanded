@@ -11,7 +11,8 @@
     "MixinMultiPlayerGameMode",
     "MixinMouseHandler",
     "MixinPlayerModel",
-    "MixinItemInHandRenderer"
+    "MixinItemInHandRenderer",
+    "MixinKeyboardInput"
   ],
   "server": [],
   "injectors": {

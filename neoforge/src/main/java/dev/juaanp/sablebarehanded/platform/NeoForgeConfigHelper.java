@@ -14,7 +14,6 @@ public class NeoForgeConfigHelper implements IConfigHelper {
     @Override public double grabStabilization() { return NeoForgeGrabConfig.grabStabilization(); }
     @Override public double rotationStabilization() { return NeoForgeGrabConfig.rotationStabilization(); }
     @Override public boolean preventFastRotations() { return NeoForgeGrabConfig.preventFastRotations(); }
-    @Override public boolean pivotAtGrabPoint() { return NeoForgeGrabConfig.pivotAtGrabPoint(); }
     @Override public boolean creativeSuperStrength() { return NeoForgeGrabConfig.creativeSuperStrength(); }
     @Override public double strength1Multiplier() { return NeoForgeGrabConfig.strength1Multiplier(); }
     @Override public double strength2Multiplier() { return NeoForgeGrabConfig.strength2Multiplier(); }
@@ -37,6 +36,15 @@ public class NeoForgeConfigHelper implements IConfigHelper {
     @Override public double maxPlayerVelocityXZ() { return NeoForgeGrabConfig.maxPlayerVelocityXZ(); }
     @Override public double maxRotationSpeed() { return NeoForgeGrabConfig.maxRotationSpeed(); }
 
-    @Override public double rotationSensitivity() { return NeoForgeGrabConfig.rotationSensitivity(); }
-    @Override public boolean invertRotation() { return NeoForgeGrabConfig.invertRotation(); }
+    @Override public double verticalRotationSensitivity() { return NeoForgeGrabConfig.verticalRotationSensitivity(); }
+    @Override public double horizontalRotationSensitivity() { return NeoForgeGrabConfig.horizontalRotationSensitivity(); }
+    @Override public boolean invertVerticalRotation() { return NeoForgeGrabConfig.invertVerticalRotation(); }
+    @Override public boolean invertHorizontalRotation() { return NeoForgeGrabConfig.invertHorizontalRotation(); }
+    @Override public boolean rotateAroundCenter() { return NeoForgeGrabConfig.rotateAroundCenter(); }
+    @Override
+    public void toggleRotateAroundCenter() {
+        boolean currentValue = NeoForgeGrabConfig.CLIENT.rotateAroundCenter.get();
+        NeoForgeGrabConfig.CLIENT.rotateAroundCenter.set(!currentValue);
+    }
+    @Override public boolean preventMovementWhileRotating() { return NeoForgeGrabConfig.preventMovementWhileRotating(); }
 }

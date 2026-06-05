@@ -1,6 +1,7 @@
 package dev.juaanp.sablebarehanded.client;
 
 import dev.juaanp.sablebarehanded.Constants;
+import dev.juaanp.sablebarehanded.config.NeoForgeGrabConfig;
 import dev.juaanp.sablebarehanded.platform.Services;
 import net.minecraft.client.Minecraft;
 import net.neoforged.api.distmarker.Dist;
@@ -21,8 +22,11 @@ public class NeoForgeClientEvents {
         ClientGrabTracker.clientTick();
         KeyBindings.clientTick();
 
-        if (ClientGrabTracker.pendingYaw != 0.0 || ClientGrabTracker.pendingPitch != 0.0) {
-            Services.NETWORK.sendRotateGrab(ClientGrabTracker.pendingYaw, ClientGrabTracker.pendingPitch);
+        boolean isRotateKeyDown = KeyBindings.ROTATE_KEY.isDown();
+
+        if (isRotateKeyDown || ClientGrabTracker.pendingYaw != 0.0 || ClientGrabTracker.pendingPitch != 0.0) {
+            boolean useCenter = Services.CONFIG.rotateAroundCenter() ^ KeyBindings.PIVOT_KEY.isDown();
+            Services.NETWORK.sendRotateGrab(ClientGrabTracker.pendingYaw, ClientGrabTracker.pendingPitch, useCenter);
 
             ClientGrabTracker.pendingYaw = 0.0;
             ClientGrabTracker.pendingPitch = 0.0;
@@ -40,5 +44,11 @@ public class NeoForgeClientEvents {
     @SubscribeEvent
     public static void onRegisterKeyMappings(RegisterKeyMappingsEvent event) {
         event.register(KeyBindings.ROTATE_KEY);
+        event.register(KeyBindings.PIVOT_KEY);
+    }
+
+    @SubscribeEvent
+    public static void onRenderHUD(net.neoforged.neoforge.client.event.RenderGuiEvent.Post event) {
+        ClientGrabTracker.renderSableOverlay(event.getGuiGraphics());
     }
 }

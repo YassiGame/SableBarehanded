@@ -31,8 +31,8 @@ public class NeoForgeNetworkHelper implements INetworkHelper {
     }
 
     @Override
-    public void sendRotateGrab(double deltaX, double deltaY) {
-        PacketDistributor.sendToServer(new RotateGrabPacket(deltaX, deltaY));
+    public void sendRotateGrab(double deltaX, double deltaY, boolean rotateAroundCenter) {
+        PacketDistributor.sendToServer(new RotateGrabPacket(deltaX, deltaY, rotateAroundCenter));
     }
 
     @Override

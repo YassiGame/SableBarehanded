@@ -25,7 +25,7 @@ public class SableBarehandedFabric implements ModInitializer {
         PayloadTypeRegistry.playS2C().register(StartGrabbingAnimationPacket.TYPE, StartGrabbingAnimationPacket.CODEC);
         PayloadTypeRegistry.playS2C().register(StopGrabbingAnimationPacket.TYPE, StopGrabbingAnimationPacket.CODEC);
 
-        PayloadTypeRegistry.playS2C().register(SyncGhostStatePacket.TYPE, SyncGhostStatePacket.CODEC); // NUEVO
+        PayloadTypeRegistry.playS2C().register(SyncGhostStatePacket.TYPE, SyncGhostStatePacket.CODEC);
 
         ServerPlayNetworking.registerGlobalReceiver(RequestGrabPacket.TYPE, (payload, context) -> {
             context.server().execute(() -> GrabPhysicsManager.startGrabbing(context.player(), payload.blockPos()));
@@ -36,7 +36,7 @@ public class SableBarehandedFabric implements ModInitializer {
         });
 
         ServerPlayNetworking.registerGlobalReceiver(RotateGrabPacket.TYPE, (payload, context) -> {
-            context.server().execute(() -> GrabPhysicsManager.applyRotation(context.player(), payload.deltaX(), payload.deltaY()));
+            context.server().execute(() -> GrabPhysicsManager.applyRotation(context.player(), payload.deltaX(), payload.deltaY(), payload.rotateAroundCenter()));
         });
 
         ServerTickEvents.END_SERVER_TICK.register(server -> {

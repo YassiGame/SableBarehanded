@@ -19,7 +19,6 @@ public interface IConfigHelper {
     double grabStabilization();
     double rotationStabilization();
     boolean preventFastRotations();
-    boolean pivotAtGrabPoint();
     boolean creativeSuperStrength();
 
     double strength1Multiplier();
@@ -35,6 +34,12 @@ public interface IConfigHelper {
     boolean ignoreCollisionsRotationOtherPlayers();
     boolean ignoreCollisionsRotationSelf();
 
-    double rotationSensitivity();
-    boolean invertRotation();
+    double verticalRotationSensitivity();
+    double horizontalRotationSensitivity();
+    boolean invertVerticalRotation();
+    boolean invertHorizontalRotation();
+
+    boolean rotateAroundCenter();
+    void toggleRotateAroundCenter();
+    boolean preventMovementWhileRotating();
 }

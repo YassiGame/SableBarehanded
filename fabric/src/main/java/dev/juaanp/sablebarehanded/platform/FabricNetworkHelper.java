@@ -47,8 +47,8 @@ public class FabricNetworkHelper implements INetworkHelper {
     }
 
     @Override
-    public void sendRotateGrab(double deltaX, double deltaY) {
-        ClientPlayNetworking.send(new RotateGrabPacket(deltaX, deltaY));
+    public void sendRotateGrab(double deltaX, double deltaY, boolean rotateAroundCenter) { // <-- AÑADIDO
+        ClientPlayNetworking.send(new RotateGrabPacket(deltaX, deltaY, rotateAroundCenter)); // <-- AÑADIDO
     }
 
     @Override

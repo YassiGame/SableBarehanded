@@ -10,6 +10,6 @@ public interface INetworkHelper {
     void sendStopGrabbingAnimation(Player player);
     void sendRequestGrab(BlockPos pos);
     void sendStopGrabbingRequest();
-    void sendRotateGrab(double deltaX, double deltaY);
+    void sendRotateGrab(double deltaX, double deltaY, boolean rotateAroundCenter);
     void sendGhostStateSync(ServerSubLevel subLevel, UUID grabberId, byte collisionMask);
 }

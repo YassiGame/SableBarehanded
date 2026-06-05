@@ -14,7 +14,6 @@ public class FabricConfigHelper implements IConfigHelper {
     @Override public double grabStabilization() { return FabricGrabConfig.COMMON.grabStabilization; }
     @Override public double rotationStabilization() { return FabricGrabConfig.COMMON.rotationStabilization; }
     @Override public boolean preventFastRotations() { return FabricGrabConfig.COMMON.preventFastRotations; }
-    @Override public boolean pivotAtGrabPoint() { return FabricGrabConfig.COMMON.pivotAtGrabPoint; }
     @Override public boolean creativeSuperStrength() { return FabricGrabConfig.COMMON.creativeSuperStrength; }
 
     @Override public double strength1Multiplier() { return FabricGrabConfig.COMMON.strength1Multiplier; }
@@ -38,6 +37,15 @@ public class FabricConfigHelper implements IConfigHelper {
     @Override public double maxPlayerVelocityXZ() { return FabricGrabConfig.COMMON.maxPlayerVelocityXZ; }
     @Override public double maxRotationSpeed() { return FabricGrabConfig.COMMON.maxRotationSpeed; }
 
-    @Override public double rotationSensitivity() { return FabricGrabConfig.CLIENT.rotationSensitivity; }
-    @Override public boolean invertRotation() { return FabricGrabConfig.CLIENT.invertRotation; }
+    @Override public double verticalRotationSensitivity() { return FabricGrabConfig.CLIENT.verticalRotationSensitivity; }
+    @Override public double horizontalRotationSensitivity() { return FabricGrabConfig.CLIENT.horizontalRotationSensitivity; }
+    @Override public boolean invertVerticalRotation() { return FabricGrabConfig.CLIENT.invertVerticalRotation; }
+    @Override public boolean invertHorizontalRotation() { return FabricGrabConfig.CLIENT.invertHorizontalRotation; }
+    @Override public boolean rotateAroundCenter() { return FabricGrabConfig.CLIENT.rotateAroundCenter; }
+    @Override
+    public void toggleRotateAroundCenter() {
+        FabricGrabConfig.CLIENT.rotateAroundCenter = !FabricGrabConfig.CLIENT.rotateAroundCenter;
+        FabricGrabConfig.save();
+    }
+    @Override public boolean preventMovementWhileRotating() { return FabricGrabConfig.CLIENT.preventMovementWhileRotating; }
 }
