@@ -1,8 +1,10 @@
 package dev.juaanp.sablebarehanded.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import dev.juaanp.sablebarehanded.client.ClientGrabTracker;
 import dev.juaanp.sablebarehanded.client.ClientPayloadHandler;
 import dev.juaanp.sablebarehanded.client.handler.RenderAnimationHandler;
+import dev.juaanp.sablebarehanded.platform.Services;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.ItemInHandRenderer;
@@ -25,28 +27,58 @@ public class MixinItemInHandRenderer {
     @Shadow @Final private EntityRenderDispatcher entityRenderDispatcher;
     @Shadow @Final private Minecraft minecraft;
 
-    @Unique private float SableBarehandedTransition = 0.0F;
-    @Unique private float oSableBarehandedTransition = 0.0F;
+    @Unique private static final float TRANSITION_SPEED = 0.2F;
+    @Unique private static final float SHAKE_MULTIPLIER = 0.04F;
+
+    @Unique private float transitionProgress = 0.0F;
+    @Unique private float oldTransitionProgress = 0.0F;
+
+    @Unique
+    private float calculateSmoothStep(float t) {
+        return t * t * (3.0F - 2.0F * t);
+    }
 
     @Inject(method = "tick", at = @At("TAIL"))
     private void onTick(CallbackInfo ci) {
-        this.oSableBarehandedTransition = this.SableBarehandedTransition;
-        boolean isGrabbing = this.minecraft.player != null && ClientPayloadHandler.GRABBING_PLAYERS.contains(this.minecraft.player.getUUID());
+        this.oldTransitionProgress = this.transitionProgress;
+
+        boolean isGrabbing = this.minecraft.player != null && (
+                ClientPayloadHandler.GRABBING_PLAYERS.contains(this.minecraft.player.getUUID()) ||
+                        ClientGrabTracker.isHoldingGrab ||
+                        ClientGrabTracker.assemblyChargeTicks > 0
+        );
 
         if (isGrabbing) {
-            this.SableBarehandedTransition += 0.2F;
+            this.transitionProgress += TRANSITION_SPEED;
         } else {
-            this.SableBarehandedTransition -= 0.2F;
+            this.transitionProgress -= TRANSITION_SPEED;
         }
-        this.SableBarehandedTransition = Mth.clamp(this.SableBarehandedTransition, 0.0F, 1.0F);
+        this.transitionProgress = Mth.clamp(this.transitionProgress, 0.0F, 1.0F);
     }
 
     @Inject(method = "renderArmWithItem", at = @At("HEAD"), cancellable = true)
     private void onRenderArmWithItem(AbstractClientPlayer player, float partialTicks, float pitch, InteractionHand hand, float swingProgress, ItemStack stack, float equippedProgress, PoseStack poseStack, MultiBufferSource buffer, int combinedLight, CallbackInfo ci) {
-        float t = Mth.lerp(partialTicks, this.oSableBarehandedTransition, this.SableBarehandedTransition);
+        float t = Mth.lerp(partialTicks, this.oldTransitionProgress, this.transitionProgress);
+
+        int charge = ClientGrabTracker.assemblyChargeTicks;
+        if (charge > 0 && stack.isEmpty()) {
+
+            float maxTicks = Math.max(1.0F, (float) ClientGrabTracker.currentRequiredAssemblyTicks);
+            float progress = Math.min((float) charge / maxTicks, 1.0F);
+
+            float shakeIntensity = progress * SHAKE_MULTIPLIER;
+
+            float time = player.tickCount + partialTicks;
+            poseStack.translate(
+                    Mth.sin(time * 3.0F) * shakeIntensity,
+                    Mth.cos(time * 4.0F) * shakeIntensity,
+                    Mth.sin(time * 5.0F) * shakeIntensity
+            );
+        }
+
         if (t <= 0.0F || player.isInvisible()) return;
 
-        float ease = t * t * (3.0F - 2.0F * t);
+        float ease = calculateSmoothStep(t);
 
         RenderAnimationHandler.renderGrabArm(player, hand, equippedProgress, stack, poseStack, buffer, combinedLight, this.entityRenderDispatcher, ease);
 
@@ -60,9 +92,9 @@ public class MixinItemInHandRenderer {
 
     @Inject(method = "renderArmWithItem", at = @At("RETURN"))
     private void onRenderArmWithItemReturn(AbstractClientPlayer player, float partialTicks, float pitch, InteractionHand hand, float swingProgress, ItemStack stack, float equippedProgress, PoseStack poseStack, MultiBufferSource buffer, int combinedLight, CallbackInfo ci) {
-        float t = Mth.lerp(partialTicks, this.oSableBarehandedTransition, this.SableBarehandedTransition);
+        float t = Mth.lerp(partialTicks, this.oldTransitionProgress, this.transitionProgress);
         if (t > 0.0F && !player.isInvisible()) {
-            float ease = t * t * (3.0F - 2.0F * t);
+            float ease = calculateSmoothStep(t);
             if (!stack.isEmpty() && ease < 0.99F) {
                 poseStack.popPose();
             }

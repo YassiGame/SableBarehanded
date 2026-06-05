@@ -35,7 +35,7 @@ public class NeoForgeClientEvents {
 
     @SubscribeEvent
     public static void onInteractKey(InputEvent.InteractionKeyMappingTriggered event) {
-        if (ClientGrabTracker.isHoldingGrab) {
+        if (ClientGrabTracker.shouldCancelInteraction()) {
             event.setCanceled(true);
             event.setSwingHand(false);
         }

@@ -42,4 +42,10 @@ public interface IConfigHelper {
     boolean rotateAroundCenter();
     void toggleRotateAroundCenter();
     boolean preventMovementWhileRotating();
+
+    boolean enableBarehandedAssembly();
+    double barehandedAssemblySpeedMultiplier();
+    double barehandedAssemblyMaxDistance();
+    boolean preventAssemblyWhenMining();
+    double barehandedAssemblyMiningThreshold();
 }

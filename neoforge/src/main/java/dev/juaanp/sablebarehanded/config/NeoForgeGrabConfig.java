@@ -37,6 +37,10 @@ public class NeoForgeGrabConfig {
         public final ModConfigSpec.BooleanValue ignoreCollisionsRotationOtherPlayers;
         public final ModConfigSpec.BooleanValue ignoreCollisionsRotationSelf;
 
+        public final ModConfigSpec.BooleanValue enableBarehandedAssembly;
+        public final ModConfigSpec.DoubleValue barehandedAssemblySpeedMultiplier;
+        public final ModConfigSpec.DoubleValue barehandedAssemblyMaxDistance;
+
         public Common(ModConfigSpec.Builder builder) {
 
             builder.translation("sable-barehanded.config.physics.mechanics").push("mechanics");
@@ -67,6 +71,15 @@ public class NeoForgeGrabConfig {
 
             strength1Multiplier = builder.translation("sable-barehanded.config.physics.strength_1_multiplier").defineInRange("strength1Multiplier", 2.0, 1.0, 100.0);
             strength2Multiplier = builder.translation("sable-barehanded.config.physics.strength_2_multiplier").defineInRange("strength2Multiplier", 4.0, 1.0, 100.0);
+
+            enableBarehandedAssembly = builder.translation("sable-barehanded.config.physics.enable_barehanded_assembly")
+                    .define("enableBarehandedAssembly", true);
+
+            barehandedAssemblySpeedMultiplier = builder.translation("sable-barehanded.config.physics.barehanded_assembly_speed_multiplier")
+                    .defineInRange("barehandedAssemblySpeedMultiplier", 1.0, 0.1, 10.0);
+
+            barehandedAssemblyMaxDistance = builder.translation("sable-barehanded.config.physics.barehanded_assembly_max_distance")
+                    .defineInRange("barehandedAssemblyMaxDistance", 2.5, 1.0, 10.0);
 
             builder.pop();
 
@@ -146,6 +159,8 @@ public class NeoForgeGrabConfig {
         public final ModConfigSpec.BooleanValue invertHorizontalRotation;
         public final ModConfigSpec.BooleanValue rotateAroundCenter;
         public final ModConfigSpec.BooleanValue preventMovementWhileRotating;
+        public final ModConfigSpec.BooleanValue preventAssemblyWhenMining;
+        public final ModConfigSpec.DoubleValue barehandedAssemblyMiningThreshold;
 
         public Client(ModConfigSpec.Builder builder) {
             verticalRotationSensitivity = builder.translation("sable-barehanded.config.client.vertical_rotation_sensitivity")
@@ -165,6 +180,12 @@ public class NeoForgeGrabConfig {
 
             preventMovementWhileRotating = builder.translation("sable-barehanded.config.client.prevent_movement_while_rotating")
                     .define("preventMovementWhileRotating", true);
+
+            preventAssemblyWhenMining = builder.translation("sable-barehanded.config.client.prevent_assembly_when_mining")
+                    .define("preventAssemblyWhenMining", true);
+
+            barehandedAssemblyMiningThreshold = builder.translation("sable-barehanded.config.client.barehanded_assembly_mining_threshold")
+                    .defineInRange("barehandedAssemblyMiningThreshold", 0.05, 0.0, 1.0);
         }
     }
 
@@ -221,4 +242,10 @@ public class NeoForgeGrabConfig {
     public static boolean invertHorizontalRotation() { return CLIENT.invertHorizontalRotation.get(); }
     public static boolean rotateAroundCenter() { return CLIENT.rotateAroundCenter.get(); }
     public static boolean preventMovementWhileRotating() { return CLIENT.preventMovementWhileRotating.get(); }
+    public static boolean preventAssemblyWhenMining() { return CLIENT.preventAssemblyWhenMining.get(); }
+    public static double barehandedAssemblyMiningThreshold() { return CLIENT.barehandedAssemblyMiningThreshold.get(); }
+
+    public static boolean enableBarehandedAssembly() { return COMMON.enableBarehandedAssembly.get(); }
+    public static double barehandedAssemblySpeedMultiplier() { return COMMON.barehandedAssemblySpeedMultiplier.get(); }
+    public static double barehandedAssemblyMaxDistance() { return COMMON.barehandedAssemblyMaxDistance.get(); }
 }

@@ -1,4 +1,4 @@
-package dev.juaanp.sablebarehanded.client; // <-- Verifica tu package
+package dev.juaanp.sablebarehanded.client;
 
 import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;
@@ -60,6 +60,19 @@ public class ModMenuIntegration implements ModMenuApi {
                     .setDefaultValue(4.0).setMin(1.0).setMax(100.0)
                     .setTooltip(Component.translatable("sable-barehanded.config.physics.strength_multiplier.tooltip"))
                     .setSaveConsumer(v -> FabricGrabConfig.COMMON.strength2Multiplier = v).build());
+
+            mechanics.add(entryBuilder.startBooleanToggle(Component.translatable("sable-barehanded.config.physics.enable_barehanded_assembly"), FabricGrabConfig.COMMON.enableBarehandedAssembly)
+                    .setDefaultValue(true).setTooltip(Component.translatable("sable-barehanded.config.physics.enable_barehanded_assembly.tooltip"))
+                    .setSaveConsumer(v -> FabricGrabConfig.COMMON.enableBarehandedAssembly = v).build());
+
+            mechanics.add(entryBuilder.startDoubleField(Component.translatable("sable-barehanded.config.physics.barehanded_assembly_speed_multiplier"), FabricGrabConfig.COMMON.barehandedAssemblySpeedMultiplier)
+                    .setDefaultValue(1.0).setTooltip(Component.translatable("sable-barehanded.config.physics.barehanded_assembly_speed_multiplier.tooltip"))
+                    .setSaveConsumer(v -> FabricGrabConfig.COMMON.barehandedAssemblySpeedMultiplier = v).build());
+
+            mechanics.add(entryBuilder.startDoubleField(Component.translatable("sable-barehanded.config.physics.barehanded_assembly_max_distance"), FabricGrabConfig.COMMON.barehandedAssemblyMaxDistance)
+                    .setDefaultValue(2.5).setMin(1.0).setMax(10.0)
+                    .setTooltip(Component.translatable("sable-barehanded.config.physics.barehanded_assembly_max_distance.tooltip"))
+                    .setSaveConsumer(v -> FabricGrabConfig.COMMON.barehandedAssemblyMaxDistance = v).build());
 
             physics.addEntry(mechanics.build());
 
@@ -153,6 +166,15 @@ public class ModMenuIntegration implements ModMenuApi {
             client.addEntry(entryBuilder.startBooleanToggle(Component.translatable("sable-barehanded.config.client.prevent_movement_while_rotating"), FabricGrabConfig.CLIENT.preventMovementWhileRotating)
                     .setDefaultValue(true).setTooltip(Component.translatable("sable-barehanded.config.client.prevent_movement_while_rotating.tooltip"))
                     .setSaveConsumer(v -> FabricGrabConfig.CLIENT.preventMovementWhileRotating = v).build());
+
+            client.addEntry(entryBuilder.startBooleanToggle(Component.translatable("sable-barehanded.config.client.prevent_assembly_when_mining"), FabricGrabConfig.CLIENT.preventAssemblyWhenMining)
+                    .setDefaultValue(true).setTooltip(Component.translatable("sable-barehanded.config.client.prevent_assembly_when_mining.tooltip"))
+                    .setSaveConsumer(v -> FabricGrabConfig.CLIENT.preventAssemblyWhenMining = v).build());
+
+            client.addEntry(entryBuilder.startDoubleField(Component.translatable("sable-barehanded.config.client.barehanded_assembly_mining_threshold"), FabricGrabConfig.CLIENT.barehandedAssemblyMiningThreshold)
+                    .setDefaultValue(0.05).setMin(0.0).setMax(1.0)
+                    .setTooltip(Component.translatable("sable-barehanded.config.client.barehanded_assembly_mining_threshold.tooltip"))
+                    .setSaveConsumer(v -> FabricGrabConfig.CLIENT.barehandedAssemblyMiningThreshold = v).build());
 
             return builder.build();
         };

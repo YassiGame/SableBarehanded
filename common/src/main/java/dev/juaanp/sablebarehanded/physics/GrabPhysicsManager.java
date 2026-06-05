@@ -3,6 +3,7 @@ package dev.juaanp.sablebarehanded.physics;
 import dev.juaanp.sablebarehanded.api.SableBarehandedEvents;
 import dev.juaanp.sablebarehanded.platform.Services;
 import dev.ryanhcode.sable.Sable;
+import dev.ryanhcode.sable.api.SubLevelAssemblyHelper;
 import dev.ryanhcode.sable.api.physics.PhysicsPipeline;
 import dev.ryanhcode.sable.api.physics.constraint.ConstraintJointAxis;
 import dev.ryanhcode.sable.api.physics.constraint.PhysicsConstraintHandle;
@@ -10,13 +11,18 @@ import dev.ryanhcode.sable.api.physics.constraint.free.FreeConstraintConfigurati
 import dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.companion.SubLevelAccess;
+import dev.ryanhcode.sable.companion.math.BoundingBox3i;
 import dev.ryanhcode.sable.companion.math.JOMLConversion;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
@@ -154,6 +160,7 @@ public class GrabPhysicsManager {
         GrabSession session = ACTIVE_GRABS.remove(playerId);
         if (session != null) {
             if (session.constraintHandle != null && !session.subLevel.isRemoved()) {
+                session.pipeline.wakeUp(session.subLevel);
                 session.constraintHandle.remove();
             }
             Services.NETWORK.sendGhostStateSync(session.subLevel, playerId, (byte) 0);
@@ -178,18 +185,8 @@ public class GrabPhysicsManager {
         );
     }
 
-    public static void startGrabbing(Player player, BlockPos pos) {
+    private static void performGrab(Player player, ServerSubLevel serverSubLevel, BlockPos pos) {
         Level level = player.level();
-        if (level.isClientSide() || ACTIVE_GRABS.containsKey(player.getUUID()) || !player.getMainHandItem().isEmpty()) return;
-
-        double reach = player.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.BLOCK_INTERACTION_RANGE).getValue() + 2.0;
-        if (player.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) > (reach * reach)) return;
-
-        SubLevelAccess target = Sable.HELPER.getContaining(level, pos);
-        if (!(target instanceof ServerSubLevel serverSubLevel)) return;
-
-        if (!SableBarehandedEvents.fireBeforeGrab(player, serverSubLevel)) return;
-
         ServerSubLevelContainer container = (ServerSubLevelContainer) SubLevelContainer.getContainer(level);
         if (container == null) return;
 
@@ -206,10 +203,60 @@ public class GrabPhysicsManager {
 
         GrabSession session = new GrabSession(serverSubLevel, distance, localGrabBlock, localCenterOfMass, crosshairTarget, initialOrient, pipeline);
 
+        pipeline.wakeUp(serverSubLevel);
+
         rebuildConstraint(session);
         Services.NETWORK.sendStartGrabbingAnimation(player);
         ACTIVE_GRABS.put(player.getUUID(), session);
+    }
+
+    public static void startGrabbing(Player player, BlockPos pos) {
+        Level level = player.level();
+        if (level.isClientSide() || ACTIVE_GRABS.containsKey(player.getUUID()) || !player.getMainHandItem().isEmpty()) return;
+
+        double reach = player.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.BLOCK_INTERACTION_RANGE).getValue() + 2.0;
+        if (player.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) > (reach * reach)) return;
+
+        SubLevelAccess target = Sable.HELPER.getContaining(level, pos);
+        if (!(target instanceof ServerSubLevel serverSubLevel)) return;
+
+        if (!SableBarehandedEvents.fireBeforeGrab(player, serverSubLevel)) return;
+
+        performGrab(player, serverSubLevel, pos);
         SableBarehandedEvents.fireOnGrab(player, serverSubLevel);
+    }
+
+    public static void assembleAndGrab(Player player, BlockPos pos) {
+        Level level = player.level();
+        if (level.isClientSide() || ACTIVE_GRABS.containsKey(player.getUUID()) || !player.getMainHandItem().isEmpty()) return;
+
+        double reach = player.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.BLOCK_INTERACTION_RANGE).getValue() + 2.0;
+        if (player.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) > (reach * reach)) return;
+
+        double maxDist = Services.CONFIG.barehandedAssemblyMaxDistance();
+
+        if (player.getEyePosition().distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(pos)) > (maxDist * maxDist)) return;
+
+        if (Sable.HELPER.getContaining(level, pos) != null) return;
+
+        java.util.List<BlockPos> blocks = java.util.List.of(pos);
+        BoundingBox3i bounds = BoundingBox3i.from(blocks);
+
+        SubLevel subLevel = SubLevelAssemblyHelper.assembleBlocks((net.minecraft.server.level.ServerLevel) level, pos, blocks, bounds);
+
+        if (subLevel instanceof ServerSubLevel serverSubLevel) {
+            level.playSound(null, pos, SoundEvents.ZOMBIE_BREAK_WOODEN_DOOR, SoundSource.PLAYERS, 0.5f, 1.5f);
+
+            ServerSubLevelContainer container = (ServerSubLevelContainer) SubLevelContainer.getContainer(level);
+            if (container != null) {
+                container.physicsSystem().getPipeline().wakeUp(serverSubLevel);
+            }
+
+            if (!SableBarehandedEvents.fireBeforeGrab(player, serverSubLevel)) return;
+
+            performGrab(player, serverSubLevel, pos);
+            SableBarehandedEvents.fireOnGrab(player, serverSubLevel);
+        }
     }
 
     public static void applyRotation(Player player, double yaw, double pitch, boolean clientPrefersCenter) {

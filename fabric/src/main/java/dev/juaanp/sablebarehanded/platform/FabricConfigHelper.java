@@ -48,4 +48,10 @@ public class FabricConfigHelper implements IConfigHelper {
         FabricGrabConfig.save();
     }
     @Override public boolean preventMovementWhileRotating() { return FabricGrabConfig.CLIENT.preventMovementWhileRotating; }
+    @Override public boolean preventAssemblyWhenMining() { return FabricGrabConfig.CLIENT.preventAssemblyWhenMining; }
+    @Override public double barehandedAssemblyMiningThreshold() { return FabricGrabConfig.CLIENT.barehandedAssemblyMiningThreshold; }
+
+    @Override public boolean enableBarehandedAssembly() { return FabricGrabConfig.COMMON.enableBarehandedAssembly; }
+    @Override public double barehandedAssemblySpeedMultiplier() {return FabricGrabConfig.COMMON.barehandedAssemblySpeedMultiplier; }
+    @Override public double barehandedAssemblyMaxDistance() { return FabricGrabConfig.COMMON.barehandedAssemblyMaxDistance; }
 }

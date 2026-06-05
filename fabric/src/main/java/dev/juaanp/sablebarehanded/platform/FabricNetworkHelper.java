@@ -42,13 +42,18 @@ public class FabricNetworkHelper implements INetworkHelper {
     }
 
     @Override
+    public void sendAssembleGrabRequest(BlockPos pos) {
+        ClientPlayNetworking.send(new AssembleGrabPacket(pos));
+    }
+
+    @Override
     public void sendStopGrabbingRequest() {
         ClientPlayNetworking.send(new StopGrabbingPacket());
     }
 
     @Override
-    public void sendRotateGrab(double deltaX, double deltaY, boolean rotateAroundCenter) { // <-- AÑADIDO
-        ClientPlayNetworking.send(new RotateGrabPacket(deltaX, deltaY, rotateAroundCenter)); // <-- AÑADIDO
+    public void sendRotateGrab(double deltaX, double deltaY, boolean rotateAroundCenter) {
+        ClientPlayNetworking.send(new RotateGrabPacket(deltaX, deltaY, rotateAroundCenter));
     }
 
     @Override

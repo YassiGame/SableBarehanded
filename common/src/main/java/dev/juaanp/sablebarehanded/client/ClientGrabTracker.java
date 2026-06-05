@@ -1,12 +1,15 @@
 package dev.juaanp.sablebarehanded.client;
 
+import dev.juaanp.sablebarehanded.mixin.accesor.MultiPlayerGameModeAccessor;
 import dev.juaanp.sablebarehanded.platform.Services;
 import dev.ryanhcode.sable.Sable;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3d;
 
 public class ClientGrabTracker {
@@ -14,6 +17,15 @@ public class ClientGrabTracker {
 
     public static double pendingYaw = 0.0;
     public static double pendingPitch = 0.0;
+    public static int assemblyChargeTicks = 0;
+    public static BlockPos assemblyTargetPos = null;
+
+    public static int currentRequiredAssemblyTicks = 20;
+
+    public static void resetAssemblyCharge() {
+        assemblyChargeTicks = 0;
+        assemblyTargetPos = null;
+    }
 
     public static void clientTick() {
         Minecraft mc = Minecraft.getInstance();
@@ -29,33 +41,92 @@ public class ClientGrabTracker {
                 isHoldingGrab = false;
                 Services.NETWORK.sendStopGrabbingRequest();
             }
+            resetAssemblyCharge();
             return;
         }
 
         boolean isAttackDown = mc.options.keyAttack.isDown();
         boolean isUseDown = mc.options.keyUse.isDown();
         boolean bothDown = isAttackDown && isUseDown;
+        boolean isSneaking = mc.player.isShiftKeyDown();
 
         if (bothDown && !isHoldingGrab && mc.player.getMainHandItem().isEmpty()) {
-            double reach = mc.player.getAttribute(Attributes.BLOCK_INTERACTION_RANGE).getValue();
-            HitResult hit = mc.player.pick(reach, 0.0f, false);
+            double reach = mc.player.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.BLOCK_INTERACTION_RANGE).getValue();
+            net.minecraft.world.phys.HitResult hit = mc.player.pick(reach, 0.0f, false);
 
-            if (hit.getType() == HitResult.Type.BLOCK) {
-                BlockHitResult blockHit = (BlockHitResult) hit;
+            if (hit.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK) {
+                net.minecraft.world.phys.BlockHitResult blockHit = (net.minecraft.world.phys.BlockHitResult) hit;
+                net.minecraft.core.BlockPos currentPos = blockHit.getBlockPos();
+
+                net.minecraft.world.phys.Vec3 blockCenter = net.minecraft.world.phys.Vec3.atCenterOf(currentPos);
+                double distanceToHit = mc.player.getEyePosition().distanceTo(blockCenter);
+
+                boolean isUnbreakable = mc.level.getBlockState(currentPos).getDestroySpeed(mc.level, currentPos) < 0.0F;
+
                 Vector3d hitPos = new Vector3d(blockHit.getLocation().x, blockHit.getLocation().y, blockHit.getLocation().z);
 
-                if (Sable.HELPER.getContaining(mc.level, hitPos) != null) {
-                    Services.NETWORK.sendRequestGrab(blockHit.getBlockPos());
-                    isHoldingGrab = true;
-
-                    if (mc.gameMode != null) {
-                        mc.gameMode.stopDestroyBlock();
+                boolean preventDueToMining = false;
+                if (Services.CONFIG.preventAssemblyWhenMining() && mc.gameMode != null) {
+                    float miningProgress = ((MultiPlayerGameModeAccessor) mc.gameMode).getDestroyProgress();
+                    if (miningProgress > Services.CONFIG.barehandedAssemblyMiningThreshold()) {
+                        preventDueToMining = true;
                     }
                 }
+
+                if (Sable.HELPER.getContaining(mc.level, hitPos) != null) {
+                    Services.NETWORK.sendRequestGrab(currentPos);
+                    isHoldingGrab = true;
+                    if (mc.gameMode != null) mc.gameMode.stopDestroyBlock();
+                    resetAssemblyCharge();
+
+                } else if (isSneaking && Services.CONFIG.enableBarehandedAssembly() && distanceToHit <= Services.CONFIG.barehandedAssemblyMaxDistance() && !isUnbreakable && !preventDueToMining) {
+
+                    if (assemblyTargetPos == null || !assemblyTargetPos.equals(currentPos)) {
+                        assemblyTargetPos = currentPos;
+                        assemblyChargeTicks = 1;
+
+                        net.minecraft.world.level.block.state.BlockState state = mc.level.getBlockState(currentPos);
+
+                        float progressPerTick = state.getDestroyProgress(mc.player, mc.level, currentPos);
+
+                        if (progressPerTick <= 0.0F) {
+                            currentRequiredAssemblyTicks = Integer.MAX_VALUE;
+                        } else {
+                            int vanillaTicks = (int) Math.ceil(1.0F / progressPerTick);
+
+                            double strengthMulti = 1.0;
+                            var strengthEffect = mc.player.getEffect(net.minecraft.world.effect.MobEffects.DAMAGE_BOOST);
+                            if (strengthEffect != null) {
+                                int amp = strengthEffect.getAmplifier();
+                                strengthMulti = amp == 0 ? Services.CONFIG.strength1Multiplier() : Services.CONFIG.strength2Multiplier();
+                            }
+
+                            currentRequiredAssemblyTicks = (int) Math.max(1, (vanillaTicks / strengthMulti) / Services.CONFIG.barehandedAssemblySpeedMultiplier());
+                        }
+                    } else {
+                        assemblyChargeTicks++;
+                    }
+
+                    if (mc.gameMode != null) mc.gameMode.stopDestroyBlock();
+
+                    if (assemblyChargeTicks >= currentRequiredAssemblyTicks) {
+                        Services.NETWORK.sendAssembleGrabRequest(assemblyTargetPos);
+                        isHoldingGrab = true;
+                        resetAssemblyCharge();
+                    }
+
+                } else {
+                    resetAssemblyCharge();
+                }
+            } else {
+                resetAssemblyCharge();
             }
         } else if (!bothDown && isHoldingGrab) {
             isHoldingGrab = false;
             Services.NETWORK.sendStopGrabbingRequest();
+            resetAssemblyCharge();
+        } else {
+            resetAssemblyCharge();
         }
     }
 
@@ -102,5 +173,45 @@ public class ClientGrabTracker {
 
         int hintWidth = mc.font.width(hint);
         graphics.drawString(mc.font, hint, (screenWidth - hintWidth) / 2, hintY, 0xAAAAAA, true);
+    }
+
+    public static boolean shouldCancelInteraction() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || mc.level == null) return false;
+
+        if (isHoldingGrab || assemblyTargetPos != null) return true;
+
+        boolean bothDown = mc.options.keyAttack.isDown() && mc.options.keyUse.isDown();
+        boolean isSneaking = mc.player.isShiftKeyDown();
+
+        if (bothDown && isSneaking && Services.CONFIG.enableBarehandedAssembly() && mc.player.getMainHandItem().isEmpty()) {
+
+            if (Services.CONFIG.preventAssemblyWhenMining() && mc.gameMode != null) {
+                float miningProgress = ((MultiPlayerGameModeAccessor) mc.gameMode).getDestroyProgress();
+                if (miningProgress > Services.CONFIG.barehandedAssemblyMiningThreshold()) {
+                    return false;
+                }
+            }
+
+            double reach = mc.player.getAttribute(Attributes.BLOCK_INTERACTION_RANGE).getValue();
+            HitResult hit = mc.player.pick(reach, 0.0f, false);
+
+            if (hit.getType() == HitResult.Type.BLOCK) {
+                BlockHitResult blockHit = (BlockHitResult) hit;
+                BlockPos currentPos = blockHit.getBlockPos();
+
+                Vec3 blockCenter = Vec3.atCenterOf(currentPos);
+                double distanceToHit = mc.player.getEyePosition().distanceTo(blockCenter);
+                boolean isUnbreakable = mc.level.getBlockState(currentPos).getDestroySpeed(mc.level, currentPos) < 0.0F;
+
+                if (distanceToHit <= Services.CONFIG.barehandedAssemblyMaxDistance() && !isUnbreakable) {
+                    org.joml.Vector3d hitPos = new org.joml.Vector3d(blockHit.getLocation().x, blockHit.getLocation().y, blockHit.getLocation().z);
+                    if (dev.ryanhcode.sable.Sable.HELPER.getContaining(mc.level, hitPos) == null) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 }

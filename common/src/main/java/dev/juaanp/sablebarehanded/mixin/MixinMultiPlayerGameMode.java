@@ -22,14 +22,16 @@ public class MixinMultiPlayerGameMode {
 
     @Inject(method = "startDestroyBlock", at = @At("HEAD"), cancellable = true)
     private void onStartDestroyBlock(BlockPos pos, Direction face, CallbackInfoReturnable<Boolean> cir) {
-        if (InteractionHandler.shouldCancelBlockDestroy(Minecraft.getInstance().player)) {
+        if (dev.juaanp.sablebarehanded.client.ClientGrabTracker.shouldCancelInteraction() ||
+                InteractionHandler.shouldCancelBlockDestroy(Minecraft.getInstance().player)) {
             cir.setReturnValue(false);
         }
     }
 
     @Inject(method = "continueDestroyBlock", at = @At("HEAD"), cancellable = true)
     private void onContinueDestroyBlock(BlockPos pos, Direction face, CallbackInfoReturnable<Boolean> cir) {
-        if (InteractionHandler.shouldCancelBlockDestroy(Minecraft.getInstance().player)) {
+        if (dev.juaanp.sablebarehanded.client.ClientGrabTracker.shouldCancelInteraction() ||
+                InteractionHandler.shouldCancelBlockDestroy(Minecraft.getInstance().player)) {
             cir.setReturnValue(false);
         }
     }

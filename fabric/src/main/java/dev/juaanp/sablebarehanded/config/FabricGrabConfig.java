@@ -46,6 +46,10 @@ public class FabricGrabConfig {
         public boolean ignoreCollisionsRotationEntities = true;
         public boolean ignoreCollisionsRotationOtherPlayers = true;
         public boolean ignoreCollisionsRotationSelf = true;
+
+        public boolean enableBarehandedAssembly = true;
+        public double barehandedAssemblySpeedMultiplier = 1.0;
+        public double barehandedAssemblyMaxDistance = 2.5;
     }
 
     public static class Client {
@@ -55,6 +59,8 @@ public class FabricGrabConfig {
         public boolean invertHorizontalRotation = false;
         public boolean rotateAroundCenter = false;
         public boolean preventMovementWhileRotating = true;
+        public boolean preventAssemblyWhenMining = true;
+        public double barehandedAssemblyMiningThreshold = 0.05;
     }
 
     public static Common COMMON = new Common();

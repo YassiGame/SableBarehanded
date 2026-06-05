@@ -1,6 +1,6 @@
 package dev.juaanp.sablebarehanded;
 
-import dev.juaanp.sablebarehanded.config.NeoForgeGrabConfig; // Asegúrate de que el import sea el correcto
+import dev.juaanp.sablebarehanded.config.NeoForgeGrabConfig;
 import dev.juaanp.sablebarehanded.network.*;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -22,6 +22,7 @@ public class SableBarehandedNeoForge {
         final PayloadRegistrar registrar = event.registrar(Constants.MOD_ID);
 
         registrar.playToServer(RequestGrabPacket.TYPE, RequestGrabPacket.CODEC, NeoForgePacketHandlers::handleRequestGrab);
+        registrar.playToServer(AssembleGrabPacket.TYPE, AssembleGrabPacket.CODEC, NeoForgePacketHandlers::handleAssembleGrab);
         registrar.playToServer(StopGrabbingPacket.TYPE, StopGrabbingPacket.CODEC, NeoForgePacketHandlers::handleStopGrabbing);
         registrar.playToServer(RotateGrabPacket.TYPE, RotateGrabPacket.CODEC, NeoForgePacketHandlers::handleRotateGrab);
 

@@ -47,4 +47,11 @@ public class NeoForgeConfigHelper implements IConfigHelper {
         NeoForgeGrabConfig.CLIENT.rotateAroundCenter.set(!currentValue);
     }
     @Override public boolean preventMovementWhileRotating() { return NeoForgeGrabConfig.preventMovementWhileRotating(); }
+
+    @Override public boolean preventAssemblyWhenMining() { return NeoForgeGrabConfig.preventAssemblyWhenMining(); }
+    @Override public double barehandedAssemblyMiningThreshold() { return NeoForgeGrabConfig.barehandedAssemblyMiningThreshold(); }
+
+    @Override public boolean enableBarehandedAssembly() {return NeoForgeGrabConfig.enableBarehandedAssembly(); }
+    @Override public double barehandedAssemblySpeedMultiplier() {return NeoForgeGrabConfig.barehandedAssemblySpeedMultiplier(); }
+    @Override public double barehandedAssemblyMaxDistance() { return NeoForgeGrabConfig.barehandedAssemblyMaxDistance(); }
 }

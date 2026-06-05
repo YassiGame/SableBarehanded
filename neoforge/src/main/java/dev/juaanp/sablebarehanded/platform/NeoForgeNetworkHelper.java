@@ -26,6 +26,11 @@ public class NeoForgeNetworkHelper implements INetworkHelper {
     }
 
     @Override
+    public void sendAssembleGrabRequest(BlockPos pos) {
+        PacketDistributor.sendToServer(new AssembleGrabPacket(pos));
+    }
+
+    @Override
     public void sendStopGrabbingRequest() {
         PacketDistributor.sendToServer(new StopGrabbingPacket());
     }

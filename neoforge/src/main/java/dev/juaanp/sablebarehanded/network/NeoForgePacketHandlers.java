@@ -14,6 +14,14 @@ public class NeoForgePacketHandlers {
         });
     }
 
+    public static void handleAssembleGrab(AssembleGrabPacket packet, IPayloadContext context) {
+        context.enqueueWork(() -> {
+            if (context.player() != null) {
+                GrabPhysicsManager.assembleAndGrab(context.player(), packet.blockPos());
+            }
+        });
+    }
+
     public static void handleStopGrabbing(StopGrabbingPacket packet, IPayloadContext context) {
         context.enqueueWork(() -> {
             if (context.player() != null) {

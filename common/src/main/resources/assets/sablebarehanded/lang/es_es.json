@@ -65,4 +65,11 @@
   "key.sable-barehanded.pivot": "Pivote de Rotación Alternativo",
   "sable-barehanded.config.client.prevent_movement_while_rotating": "Prevenir Movimiento al Rotar",
   "sable-barehanded.config.client.prevent_movement_while_rotating.tooltip": "Bloquea el movimiento del jugador (WASD/Saltar/Agacharse) mientras se mantiene la tecla de rotación para prevenir caídas accidentales.",
+
+  "sable-barehanded.config.physics.enable_barehanded_assembly": "Habilitar Extracción Manual",
+  "sable-barehanded.config.physics.enable_barehanded_assembly.tooltip": "Permite arrancar bloques del mundo como subniveles manteniendo ambos clics mientras estás agachado.",
+  "sable-barehanded.config.physics.barehanded_assembly_ticks": "Tiempo de Extracción (Ticks)",
+  "sable-barehanded.config.physics.barehanded_assembly_ticks.tooltip": "Tiempo necesario para arrancar el bloque. 20 ticks = 1 segundo.",
+  "sable-barehanded.config.physics.barehanded_assembly_max_distance": "Distancia Máxima de Extracción",
+  "sable-barehanded.config.physics.barehanded_assembly_max_distance.tooltip": "Distancia máxima permitida entre el jugador y el bloque para poder arrancarlo."
 }
