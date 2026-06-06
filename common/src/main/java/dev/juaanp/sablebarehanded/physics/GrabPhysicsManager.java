@@ -256,7 +256,11 @@ public class GrabPhysicsManager {
             if (!isFastLift) {
                 level.levelEvent(2001, pos, net.minecraft.world.level.block.Block.getId(mainState));
             } else {
-                level.playSound(null, pos, SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS, 0.2f, 0.5f);
+                level.playSound(null, pos, net.minecraft.sounds.SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS, 0.2f, 0.5f);
+            }
+
+            for (BlockPos bPos : blocks) {
+                level.updateNeighborsAt(bPos, net.minecraft.world.level.block.Blocks.AIR);
             }
 
             ServerSubLevelContainer container = (ServerSubLevelContainer) SubLevelContainer.getContainer(level);

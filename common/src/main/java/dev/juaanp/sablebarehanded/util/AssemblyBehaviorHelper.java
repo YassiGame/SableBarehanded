@@ -4,22 +4,20 @@ import dev.juaanp.sablebarehanded.platform.Services;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class AssemblyBehaviorHelper {
 
     public static boolean isIgnored(Level level, BlockPos pos, BlockState state) {
         if (state.isAir() || state.getDestroySpeed(level, pos) < 0.0F) return true;
-
         if (!state.getFluidState().isEmpty() && !state.isSolidRender(level, pos)) return true;
-
         return false;
     }
 
-    public static boolean isLiftableDecor(BlockState state) {
-        Block block = state.getBlock();
-        return block instanceof BushBlock;
+    public static boolean isLiftableDecor(Level level, BlockPos pos, BlockState state) {
+        if (state.isAir() || state.getDestroySpeed(level, pos) < 0.0F || !state.getFluidState().isEmpty()) return false;
+
+        return state.getCollisionShape(level, pos).isEmpty();
     }
 
     public static boolean isFastLift(Level level, BlockPos pos, BlockState state) {
@@ -28,20 +26,29 @@ public class AssemblyBehaviorHelper {
 
     public static java.util.List<BlockPos> getConnectedBlocks(Level level, BlockPos pos) {
         java.util.List<BlockPos> blocks = new java.util.ArrayList<>();
-        blocks.add(pos);
-        BlockState state = level.getBlockState(pos);
 
-        if (state.getBlock() instanceof net.minecraft.world.level.block.ChestBlock) {
-            var type = state.getValue(net.minecraft.world.level.block.ChestBlock.TYPE);
+        BlockPos basePos = pos;
+
+        while (isLiftableDecor(level, basePos, level.getBlockState(basePos))) {
+            basePos = basePos.below();
+        }
+
+        blocks.add(basePos);
+        BlockState baseState = level.getBlockState(basePos);
+
+        if (baseState.getBlock() instanceof net.minecraft.world.level.block.ChestBlock) {
+            var type = baseState.getValue(net.minecraft.world.level.block.ChestBlock.TYPE);
             if (type != net.minecraft.world.level.block.state.properties.ChestType.SINGLE) {
-                blocks.add(pos.relative(net.minecraft.world.level.block.ChestBlock.getConnectedDirection(state)));
+                blocks.add(basePos.relative(net.minecraft.world.level.block.ChestBlock.getConnectedDirection(baseState)));
             }
         }
-        else if (isLiftableDecor(level.getBlockState(pos.above()))) {
-            blocks.add(pos.above());
-        } else if (isLiftableDecor(state)) {
-            blocks.add(pos.below());
+
+        BlockPos currentUp = basePos.above();
+        while (isLiftableDecor(level, currentUp, level.getBlockState(currentUp))) {
+            blocks.add(currentUp);
+            currentUp = currentUp.above();
         }
+
         return blocks;
     }
 
