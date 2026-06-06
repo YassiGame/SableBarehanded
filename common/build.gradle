@@ -16,7 +16,6 @@ repositories {
 
 neoForge {
     neoFormVersion = neo_form_version
-    // Automatically enable AccessTransformers if the file exists
     def at = file('src/main/resources/META-INF/accesstransformer.cfg')
     if (at.exists()) {
         accessTransformers.from(at.absolutePath)
@@ -35,7 +34,6 @@ dependencies {
     compileOnly "maven.modrinth:sable:1.2.2+mc1.21.1"
 
     api("dev.ryanhcode.sable-companion:sable-companion-common-1.21.1:1.4.1")
-
 }
 
 configurations {

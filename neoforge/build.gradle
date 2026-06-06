@@ -12,6 +12,7 @@ repositories {
         name = "mainReleases"
         url = uri("https://maven.ryanhcode.dev/releases")
     }
+    maven { url "https://maven.shedaniel.me/" }
 }
 
 neoForge {
@@ -54,6 +55,7 @@ neoForge {
 
 dependencies {
     implementation "maven.modrinth:sable:1.2.2+mc1.21.1"
+    implementation "me.shedaniel.cloth:cloth-config-neoforge:${project.clothconfig_version}"
 }
 
 sourceSets.main.resources { srcDir 'src/generated/resources' }

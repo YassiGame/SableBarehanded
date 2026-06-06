@@ -1,13 +1,16 @@
 package dev.juaanp.sablebarehanded.client;
 
+import dev.juaanp.sablebarehanded.config.CommonConfig;
 import dev.juaanp.sablebarehanded.network.StartGrabbingAnimationPacket;
 import dev.juaanp.sablebarehanded.network.StopGrabbingAnimationPacket;
+import dev.juaanp.sablebarehanded.network.SyncConfigPacket;
 import dev.juaanp.sablebarehanded.network.SyncGhostStatePacket;
 import dev.juaanp.sablebarehanded.physics.GrabPhysicsManager;
 import dev.juaanp.sablebarehanded.platform.Services;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.fabricmc.fabric.api.event.player.AttackBlockCallback;
@@ -36,6 +39,16 @@ public class SableBarehandedFabricClient implements ClientModInitializer {
             });
         });
 
+        ClientPlayNetworking.registerGlobalReceiver(SyncConfigPacket.TYPE, (payload, context) -> {
+            context.client().execute(() -> {
+                CommonConfig.loadCommonFromJson(payload.configJson());
+            });
+        });
+
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+            CommonConfig.load();
+        });
+
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player == null || client.level == null) return;
 
@@ -45,7 +58,7 @@ public class SableBarehandedFabricClient implements ClientModInitializer {
             boolean isRotateKeyDown = KeyBindings.ROTATE_KEY.isDown();
 
             if (isRotateKeyDown || ClientGrabTracker.pendingYaw != 0.0 || ClientGrabTracker.pendingPitch != 0.0) {
-                boolean useCenter = Services.CONFIG.rotateAroundCenter() ^ KeyBindings.PIVOT_KEY.isDown();
+                boolean useCenter = CommonConfig.CLIENT.rotateAroundCenter ^ KeyBindings.PIVOT_KEY.isDown();
                 Services.NETWORK.sendRotateGrab(ClientGrabTracker.pendingYaw, ClientGrabTracker.pendingPitch, useCenter);
 
                 ClientGrabTracker.pendingYaw = 0.0;

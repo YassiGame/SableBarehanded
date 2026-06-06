@@ -1,6 +1,6 @@
 package dev.juaanp.sablebarehanded;
 
-import dev.juaanp.sablebarehanded.config.FabricGrabConfig;
+import dev.juaanp.sablebarehanded.config.CommonConfig;
 import dev.juaanp.sablebarehanded.network.*;
 import dev.juaanp.sablebarehanded.physics.GrabPhysicsManager;
 import net.fabricmc.api.ModInitializer;
@@ -16,7 +16,7 @@ public class SableBarehandedFabric implements ModInitializer {
 
     @Override
     public void onInitialize() {
-        FabricGrabConfig.load();
+        CommonConfig.load();
 
         PayloadTypeRegistry.playC2S().register(RequestGrabPacket.TYPE, RequestGrabPacket.CODEC);
         PayloadTypeRegistry.playC2S().register(AssembleGrabPacket.TYPE, AssembleGrabPacket.CODEC);
@@ -26,6 +26,7 @@ public class SableBarehandedFabric implements ModInitializer {
         PayloadTypeRegistry.playS2C().register(StartGrabbingAnimationPacket.TYPE, StartGrabbingAnimationPacket.CODEC);
         PayloadTypeRegistry.playS2C().register(StopGrabbingAnimationPacket.TYPE, StopGrabbingAnimationPacket.CODEC);
         PayloadTypeRegistry.playS2C().register(SyncGhostStatePacket.TYPE, SyncGhostStatePacket.CODEC);
+        PayloadTypeRegistry.playS2C().register(SyncConfigPacket.TYPE, SyncConfigPacket.CODEC); // Nuevo paquete
 
         ServerPlayNetworking.registerGlobalReceiver(RequestGrabPacket.TYPE, (payload, context) -> {
             context.server().execute(() -> GrabPhysicsManager.startGrabbing(context.player(), payload.blockPos()));
@@ -47,6 +48,11 @@ public class SableBarehandedFabric implements ModInitializer {
             for (ServerPlayer player : server.getPlayerList().getPlayers()) {
                 GrabPhysicsManager.tickPlayer(player);
             }
+        });
+
+        ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
+            SyncConfigPacket syncPacket = new SyncConfigPacket(CommonConfig.getCommonJson());
+            ServerPlayNetworking.send(handler.getPlayer(), syncPacket);
         });
 
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {

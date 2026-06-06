@@ -1,10 +1,24 @@
 package dev.juaanp.sablebarehanded.util;
 
+import dev.juaanp.sablebarehanded.config.CommonConfig;
 import dev.juaanp.sablebarehanded.platform.Services;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.BedBlock;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.ChestBlock;
+import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BedPart;
+import net.minecraft.world.level.block.state.properties.ChestType;
+import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
+import net.minecraft.world.level.material.Fluids;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Proxy;
 
 public class AssemblyBehaviorHelper {
 
@@ -25,53 +39,87 @@ public class AssemblyBehaviorHelper {
 
     public static java.util.List<BlockPos> getConnectedBlocks(Level level, BlockPos pos) {
         java.util.List<BlockPos> blocks = new java.util.ArrayList<>();
+        blocks.add(pos);
 
-        BlockPos basePos = pos;
+        BlockState baseState = level.getBlockState(pos);
 
-        while (isLiftableDecor(level, basePos, level.getBlockState(basePos))) {
-            basePos = basePos.below();
-        }
-
-        blocks.add(basePos);
-        BlockState baseState = level.getBlockState(basePos);
-
-        if (baseState.getBlock() instanceof net.minecraft.world.level.block.ChestBlock) {
-            var type = baseState.getValue(net.minecraft.world.level.block.ChestBlock.TYPE);
-            if (type != net.minecraft.world.level.block.state.properties.ChestType.SINGLE) {
-                blocks.add(basePos.relative(net.minecraft.world.level.block.ChestBlock.getConnectedDirection(baseState)));
+        if (baseState.getBlock() instanceof ChestBlock) {
+            var type = baseState.getValue(ChestBlock.TYPE);
+            if (type != ChestType.SINGLE) {
+                blocks.add(pos.relative(ChestBlock.getConnectedDirection(baseState)));
             }
         }
-        else if (baseState.getBlock() instanceof net.minecraft.world.level.block.DoorBlock) {
-            var half = baseState.getValue(net.minecraft.world.level.block.DoorBlock.HALF);
-            if (half == net.minecraft.world.level.block.state.properties.DoubleBlockHalf.LOWER) {
-                blocks.add(basePos.above());
+        else if (baseState.getBlock() instanceof DoorBlock) {
+            var half = baseState.getValue(DoorBlock.HALF);
+            if (half == DoubleBlockHalf.LOWER) {
+                blocks.add(pos.above());
             } else {
-                blocks.add(basePos.below());
+                blocks.add(pos.below());
             }
         }
-        else if (baseState.getBlock() instanceof net.minecraft.world.level.block.BedBlock) {
-            var part = baseState.getValue(net.minecraft.world.level.block.BedBlock.PART);
-            var facing = baseState.getValue(net.minecraft.world.level.block.BedBlock.FACING);
-            if (part == net.minecraft.world.level.block.state.properties.BedPart.HEAD) {
-                blocks.add(basePos.relative(facing.getOpposite()));
+        else if (baseState.getBlock() instanceof BedBlock) {
+            var part = baseState.getValue(BedBlock.PART);
+            var facing = baseState.getValue(BedBlock.FACING);
+            if (part == BedPart.HEAD) {
+                blocks.add(pos.relative(facing.getOpposite()));
             } else {
-                blocks.add(basePos.relative(facing));
+                blocks.add(pos.relative(facing));
             }
         }
 
-        BlockPos currentUp = basePos.above();
-        while (isLiftableDecor(level, currentUp, level.getBlockState(currentUp))) {
-            if (!blocks.contains(currentUp)) {
-                blocks.add(currentUp);
+        java.util.Set<BlockPos> assembly = new java.util.HashSet<>(blocks);
+        java.util.Queue<BlockPos> queue = new java.util.LinkedList<>(blocks);
+
+        LevelReader simulatedLevel = (LevelReader) Proxy.newProxyInstance(
+                LevelReader.class.getClassLoader(),
+                new Class<?>[] { LevelReader.class },
+                (proxy, method, args) -> {
+                    if (args != null && args.length > 0 && args[0] instanceof BlockPos) {
+                        BlockPos p = (BlockPos) args[0];
+                        if (assembly.contains(p)) {
+                            String name = method.getName();
+                            if (name.equals("getBlockState")) {
+                                return Blocks.AIR.defaultBlockState();
+                            }
+                            if (name.equals("getFluidState")) {
+                                return Fluids.EMPTY.defaultFluidState();
+                            }
+                            if (name.equals("getBlockEntity")) {
+                                return null;
+                            }
+                        }
+                    }
+                    try {
+                        return method.invoke(level, args);
+                    } catch (InvocationTargetException e) {
+                        throw e.getCause();
+                    }
+                }
+        );
+
+        while (!queue.isEmpty()) {
+            BlockPos current = queue.poll();
+
+            for (net.minecraft.core.Direction dir : net.minecraft.core.Direction.values()) {
+                BlockPos adj = current.relative(dir);
+                if (assembly.contains(adj)) continue;
+
+                BlockState adjState = level.getBlockState(adj);
+
+                if (adjState.isAir() || !isLiftableDecor(level, adj, adjState)) continue;
+
+                if (!adjState.canSurvive(simulatedLevel, adj)) {
+                    assembly.add(adj);
+                    queue.add(adj);
+                }
             }
-            currentUp = currentUp.above();
         }
 
-        return blocks;
+        return new java.util.ArrayList<>(assembly);
     }
 
     public static int calculateAssemblyTicks(Player player, Level level, java.util.List<BlockPos> blocks) {
-        boolean isCreativeSuper = player.isCreative() && Services.CONFIG.creativeSuperStrength();
+        boolean isCreativeSuper = player.isCreative() && CommonConfig.COMMON.creativeSuperStrength;
         if (isCreativeSuper) return 1;
 
         int totalTicks = 0;
@@ -90,12 +138,12 @@ public class AssemblyBehaviorHelper {
         }
 
         double strengthMulti = 1.0;
-        var strengthEffect = player.getEffect(net.minecraft.world.effect.MobEffects.DAMAGE_BOOST);
+        var strengthEffect = player.getEffect(MobEffects.DAMAGE_BOOST);
         if (strengthEffect != null) {
             int amp = strengthEffect.getAmplifier();
-            strengthMulti = amp == 0 ? Services.CONFIG.strength1Multiplier() : Services.CONFIG.strength2Multiplier();
+            strengthMulti = amp == 0 ? CommonConfig.COMMON.strength1Multiplier : CommonConfig.COMMON.strength2Multiplier;
         }
 
-        return (int) Math.max(1, (totalTicks / strengthMulti) / Services.CONFIG.barehandedAssemblySpeedMultiplier());
+        return (int) Math.max(1, (totalTicks / strengthMulti) / CommonConfig.COMMON.barehandedAssemblySpeedMultiplier);
     }
 }

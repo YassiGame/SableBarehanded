@@ -1,11 +1,19 @@
 package dev.juaanp.sablebarehanded;
 
-import dev.juaanp.sablebarehanded.config.NeoForgeGrabConfig;
+import dev.juaanp.sablebarehanded.client.NeoForgeConfigScreen;
+import dev.juaanp.sablebarehanded.config.CommonConfig;
 import dev.juaanp.sablebarehanded.network.*;
+import net.minecraft.server.level.ServerPlayer;
+import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
-import net.neoforged.fml.config.ModConfig;
+import net.neoforged.fml.loading.FMLEnvironment;
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
+import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
@@ -13,9 +21,23 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 public class SableBarehandedNeoForge {
 
     public SableBarehandedNeoForge(IEventBus modEventBus, ModContainer modContainer) {
-        modContainer.registerConfig(ModConfig.Type.COMMON, NeoForgeGrabConfig.COMMON_SPEC);
-        modContainer.registerConfig(ModConfig.Type.CLIENT, NeoForgeGrabConfig.CLIENT_SPEC);
+        CommonConfig.load();
+
         modEventBus.addListener(this::registerPayloads);
+
+        modContainer.registerExtensionPoint(
+                IConfigScreenFactory.class,
+                (minecraft, parentScreen) -> NeoForgeConfigScreen.create(parentScreen)
+        );
+
+        NeoForge.EVENT_BUS.addListener(this::onPlayerJoin);
+    }
+
+    private void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
+        if (event.getEntity() instanceof ServerPlayer serverPlayer) {
+            SyncConfigPacket packet = new SyncConfigPacket(CommonConfig.getCommonJson());
+            PacketDistributor.sendToPlayer(serverPlayer, packet);
+        }
     }
 
     private void registerPayloads(final RegisterPayloadHandlersEvent event) {
@@ -29,5 +51,7 @@ public class SableBarehandedNeoForge {
         registrar.playToClient(StartGrabbingAnimationPacket.TYPE, StartGrabbingAnimationPacket.CODEC, NeoForgePacketHandlers::handleStartAnim);
         registrar.playToClient(StopGrabbingAnimationPacket.TYPE, StopGrabbingAnimationPacket.CODEC, NeoForgePacketHandlers::handleStopAnim);
         registrar.playToClient(SyncGhostStatePacket.TYPE, SyncGhostStatePacket.CODEC, NeoForgePacketHandlers::handleGhostStateSync);
+
+        registrar.playToClient(SyncConfigPacket.TYPE, SyncConfigPacket.CODEC, NeoForgePacketHandlers::handleConfigSync);
     }
 }

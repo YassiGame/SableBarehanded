@@ -1,6 +1,7 @@
 package dev.juaanp.sablebarehanded.network;
 
 import dev.juaanp.sablebarehanded.client.ClientPayloadHandler;
+import dev.juaanp.sablebarehanded.config.CommonConfig;
 import dev.juaanp.sablebarehanded.physics.GrabPhysicsManager;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
@@ -58,6 +59,14 @@ public class NeoForgePacketHandlers {
         context.enqueueWork(() -> {
             if (context.flow().isClientbound()) {
                 GrabPhysicsManager.setClientGhostState(packet.subLevelId(), packet.grabberId(), packet.collisionMask());
+            }
+        });
+    }
+
+    public static void handleConfigSync(SyncConfigPacket packet, IPayloadContext context) {
+        context.enqueueWork(() -> {
+            if (context.flow().isClientbound()) {
+                CommonConfig.loadCommonFromJson(packet.configJson());
             }
         });
     }

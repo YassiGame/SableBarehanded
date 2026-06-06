@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import dev.juaanp.sablebarehanded.client.ClientGrabTracker;
 import dev.juaanp.sablebarehanded.client.ClientPayloadHandler;
 import dev.juaanp.sablebarehanded.client.handler.RenderAnimationHandler;
+import dev.juaanp.sablebarehanded.config.CommonConfig;
 import dev.juaanp.sablebarehanded.platform.Services;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -27,10 +28,7 @@ public class MixinItemInHandRenderer {
     @Shadow @Final private EntityRenderDispatcher entityRenderDispatcher;
     @Shadow @Final private Minecraft minecraft;
 
-    @Unique private static final float TRANSITION_SPEED = 0.2F;
-    @Unique private static final float SHAKE_MULTIPLIER = 0.04F;
-
-    @Unique private float transitionProgress = 0.0F;
+    @Unique private float transitionProgress    = 0.0F;
     @Unique private float oldTransitionProgress = 0.0F;
 
     @Unique
@@ -48,55 +46,71 @@ public class MixinItemInHandRenderer {
                         ClientGrabTracker.assemblyChargeTicks > 0
         );
 
+        float speed = (float) CommonConfig.CLIENT.armTransitionSpeed;
         if (isGrabbing) {
-            this.transitionProgress += TRANSITION_SPEED;
+            this.transitionProgress += speed;
         } else {
-            this.transitionProgress -= TRANSITION_SPEED;
+            this.transitionProgress -= speed;
         }
         this.transitionProgress = Mth.clamp(this.transitionProgress, 0.0F, 1.0F);
     }
 
     @Inject(method = "renderArmWithItem", at = @At("HEAD"), cancellable = true)
-    private void onRenderArmWithItem(AbstractClientPlayer player, float partialTicks, float pitch, InteractionHand hand, float swingProgress, ItemStack stack, float equippedProgress, PoseStack poseStack, MultiBufferSource buffer, int combinedLight, CallbackInfo ci) {
+    private void onRenderArmWithItem(
+            AbstractClientPlayer player, float partialTicks, float pitch,
+            InteractionHand hand, float swingProgress, ItemStack stack,
+            float equippedProgress, PoseStack poseStack,
+            MultiBufferSource buffer, int combinedLight, CallbackInfo ci) {
+
         float t = Mth.lerp(partialTicks, this.oldTransitionProgress, this.transitionProgress);
 
         int charge = ClientGrabTracker.assemblyChargeTicks;
 
         if (charge > 0 && ClientGrabTracker.isPulling && stack.isEmpty()) {
-
             float maxTicks = Math.max(1.0F, (float) ClientGrabTracker.currentRequiredAssemblyTicks);
             float progress = Math.min((float) charge / maxTicks, 1.0F);
 
-            float shakeIntensity = progress * SHAKE_MULTIPLIER;
-
-            float time = player.tickCount + partialTicks;
-            poseStack.translate(
-                    Mth.sin(time * 3.0F) * shakeIntensity,
-                    Mth.cos(time * 4.0F) * shakeIntensity,
-                    Mth.sin(time * 5.0F) * shakeIntensity
-            );
+            float visualThreshold = (float) CommonConfig.CLIENT.visualShakeThreshold;
+            if (progress >= visualThreshold) {
+                float shakeIntensity = progress * (float) CommonConfig.CLIENT.assemblyShakeMultiplier;
+                float time = player.tickCount + partialTicks;
+                poseStack.translate(
+                        Mth.sin(time * (float) CommonConfig.CLIENT.shakeFrequencyX) * shakeIntensity,
+                        Mth.cos(time * (float) CommonConfig.CLIENT.shakeFrequencyY) * shakeIntensity,
+                        Mth.sin(time * (float) CommonConfig.CLIENT.shakeFrequencyZ) * shakeIntensity
+                );
+            }
         }
 
         if (t <= 0.0F || player.isInvisible()) return;
 
         float ease = calculateSmoothStep(t);
+        float easeFullThreshold = (float) CommonConfig.CLIENT.armEaseFullThreshold;
 
-        RenderAnimationHandler.renderGrabArm(player, hand, equippedProgress, stack, poseStack, buffer, combinedLight, this.entityRenderDispatcher, ease);
+        RenderAnimationHandler.renderGrabArm(
+                player, hand, equippedProgress, stack,
+                poseStack, buffer, combinedLight, this.entityRenderDispatcher, ease);
 
-        if (stack.isEmpty() || ease >= 0.99F) {
+        if (stack.isEmpty() || ease >= easeFullThreshold) {
             ci.cancel();
         } else {
             poseStack.pushPose();
-            poseStack.translate(0.0D, -ease * 1.5D, 0.0D);
+            poseStack.translate(0.0D, -ease * CommonConfig.CLIENT.armGrabLowerOffset, 0.0D);
         }
     }
 
     @Inject(method = "renderArmWithItem", at = @At("RETURN"))
-    private void onRenderArmWithItemReturn(AbstractClientPlayer player, float partialTicks, float pitch, InteractionHand hand, float swingProgress, ItemStack stack, float equippedProgress, PoseStack poseStack, MultiBufferSource buffer, int combinedLight, CallbackInfo ci) {
+    private void onRenderArmWithItemReturn(
+            AbstractClientPlayer player, float partialTicks, float pitch,
+            InteractionHand hand, float swingProgress, ItemStack stack,
+            float equippedProgress, PoseStack poseStack,
+            MultiBufferSource buffer, int combinedLight, CallbackInfo ci) {
+
         float t = Mth.lerp(partialTicks, this.oldTransitionProgress, this.transitionProgress);
         if (t > 0.0F && !player.isInvisible()) {
             float ease = calculateSmoothStep(t);
-            if (!stack.isEmpty() && ease < 0.99F) {
+            float easeFullThreshold = (float) CommonConfig.CLIENT.armEaseFullThreshold;
+            if (!stack.isEmpty() && ease < easeFullThreshold) {
                 poseStack.popPose();
             }
         }

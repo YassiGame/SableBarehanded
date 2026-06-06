@@ -37,3 +37,10 @@ type="required"
 versionRange = "${sable_version_range}"
 ordering = "NONE"
 side = "BOTH"
+
+[[dependencies.${mod_id}]]
+modId = "cloth-config"
+type="required"
+versionRange = "${clothconfig_version}"
+ordering = "NONE"
+side = "CLIENT"

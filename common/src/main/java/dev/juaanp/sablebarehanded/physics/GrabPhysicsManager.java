@@ -1,6 +1,7 @@
 package dev.juaanp.sablebarehanded.physics;
 
 import dev.juaanp.sablebarehanded.api.SableBarehandedEvents;
+import dev.juaanp.sablebarehanded.config.CommonConfig;
 import dev.juaanp.sablebarehanded.platform.Services;
 import dev.juaanp.sablebarehanded.util.AssemblyBehaviorHelper;
 import dev.ryanhcode.sable.Sable;
@@ -144,15 +145,15 @@ public class GrabPhysicsManager {
                 UUID grabberId = entry.getKey();
                 boolean isRotating = entry.getValue().isRotating;
 
-                boolean ignoreEverything = isRotating ? Services.CONFIG.ignoreCollisionsRotationEverything() : Services.CONFIG.ignoreCollisionsGrabEverything();
+                boolean ignoreEverything = isRotating ? CommonConfig.COMMON.ignoreCollisionsRotationEverything : CommonConfig.COMMON.ignoreCollisionsGrabEverything;
                 if (ignoreEverything) return true;
 
                 if (entity instanceof Player player) {
-                    boolean ignoreSelf = isRotating ? Services.CONFIG.ignoreCollisionsRotationSelf() : Services.CONFIG.ignoreCollisionsGrabSelf();
-                    boolean ignoreOthers = isRotating ? Services.CONFIG.ignoreCollisionsRotationOtherPlayers() : Services.CONFIG.ignoreCollisionsGrabOtherPlayers();
+                    boolean ignoreSelf = isRotating ? CommonConfig.COMMON.ignoreCollisionsRotationSelf : CommonConfig.COMMON.ignoreCollisionsGrabSelf;
+                    boolean ignoreOthers = isRotating ? CommonConfig.COMMON.ignoreCollisionsRotationOtherPlayers : CommonConfig.COMMON.ignoreCollisionsGrabOtherPlayers;
                     return player.getUUID().equals(grabberId) ? ignoreSelf : ignoreOthers;
                 } else {
-                    return isRotating ? Services.CONFIG.ignoreCollisionsRotationEntities() : Services.CONFIG.ignoreCollisionsGrabEntities();
+                    return isRotating ? CommonConfig.COMMON.ignoreCollisionsRotationEntities : CommonConfig.COMMON.ignoreCollisionsGrabEntities;
                 }
             }
         }
@@ -199,7 +200,7 @@ public class GrabPhysicsManager {
         Vector3d globalGrabBlockPos = serverSubLevel.logicalPose().transformPosition(new Vector3d(localGrabBlock));
         float distance = (float) player.getEyePosition().distanceTo(new Vec3(globalGrabBlockPos.x, globalGrabBlockPos.y, globalGrabBlockPos.z));
 
-        Vector3d crosshairTarget = JOMLConversion.toJOML(player.getEyePosition().add(player.getLookAngle().scale(Math.max(Services.CONFIG.minDistance(), distance))));
+        Vector3d crosshairTarget = JOMLConversion.toJOML(player.getEyePosition().add(player.getLookAngle().scale(Math.max(CommonConfig.COMMON.minDistance, distance))));
         Quaterniond initialOrient = serverSubLevel.logicalPose().orientation();
 
         GrabSession session = new GrabSession(serverSubLevel, distance, localGrabBlock, localCenterOfMass, crosshairTarget, initialOrient, pipeline);
@@ -234,7 +235,7 @@ public class GrabPhysicsManager {
         double reach = player.getAttribute(Attributes.BLOCK_INTERACTION_RANGE).getValue() + 2.0;
         if (player.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) > (reach * reach)) return;
 
-        double maxDist = Services.CONFIG.barehandedAssemblyMaxDistance() + 1.0;
+        double maxDist = CommonConfig.COMMON.barehandedAssemblyMaxDistance + 1.0;
         if (player.getEyePosition().distanceToSqr(Vec3.atCenterOf(pos)) > (maxDist * maxDist)) return;
 
         BlockState mainState = level.getBlockState(pos);
@@ -294,7 +295,7 @@ public class GrabPhysicsManager {
     }
 
     public static void applyRotation(Player player, double yaw, double pitch, boolean clientPrefersCenter) {
-        if (!Services.CONFIG.enableRotation()) return;
+        if (!CommonConfig.COMMON.enableRotation) return;
 
         GrabSession grab = ACTIVE_GRABS.get(player.getUUID());
         if (grab == null || grab.subLevel.isRemoved()) return;
@@ -311,16 +312,16 @@ public class GrabPhysicsManager {
 
         grab.rotationTicksLeft = 5;
 
-        boolean isCreativeSuper = player.isCreative() && Services.CONFIG.creativeSuperStrength();
+        boolean isCreativeSuper = player.isCreative() && CommonConfig.COMMON.creativeSuperStrength;
         double mass       = grab.subLevel.getMassTracker().getMass();
-        double massFactor = isCreativeSuper ? 1.0 : (1.0 / (1.0 + mass * Services.CONFIG.rotationMassDampingFactor()));
+        double massFactor = isCreativeSuper ? 1.0 : (1.0 / (1.0 + mass * CommonConfig.COMMON.rotationMassDampingFactor));
 
         double yawDelta   = yaw   * massFactor;
         double pitchDelta = pitch * massFactor;
 
-        if (Services.CONFIG.preventFastRotations()) {
-            yawDelta   = Mth.clamp(yawDelta,   -Services.CONFIG.maxRotationSpeed(), Services.CONFIG.maxRotationSpeed());
-            pitchDelta = Mth.clamp(pitchDelta, -Services.CONFIG.maxRotationSpeed(), Services.CONFIG.maxRotationSpeed());
+        if (CommonConfig.COMMON.preventFastRotations) {
+            yawDelta   = Mth.clamp(yawDelta,   -CommonConfig.COMMON.maxRotationSpeed, CommonConfig.COMMON.maxRotationSpeed);
+            pitchDelta = Mth.clamp(pitchDelta, -CommonConfig.COMMON.maxRotationSpeed, CommonConfig.COMMON.maxRotationSpeed);
         }
 
         final Vec3 look    = player.getLookAngle();
@@ -355,11 +356,11 @@ public class GrabPhysicsManager {
         if (player.level().isClientSide()) return;
 
         Vec3 vel = player.getDeltaMovement();
-        if (Math.abs(vel.x) > Services.CONFIG.maxPlayerVelocityXZ() || vel.y > Services.CONFIG.maxPlayerVelocityYUp() || vel.y < Services.CONFIG.maxPlayerVelocityYDown() || Math.abs(vel.z) > Services.CONFIG.maxPlayerVelocityXZ()) {
+        if (Math.abs(vel.x) > CommonConfig.COMMON.maxPlayerVelocityXZ || vel.y > CommonConfig.COMMON.maxPlayerVelocityYUp || vel.y < CommonConfig.COMMON.maxPlayerVelocityYDown || Math.abs(vel.z) > CommonConfig.COMMON.maxPlayerVelocityXZ) {
             player.setDeltaMovement(
-                    Mth.clamp(vel.x, -Services.CONFIG.maxPlayerVelocityXZ(), Services.CONFIG.maxPlayerVelocityXZ()),
-                    Mth.clamp(vel.y, Services.CONFIG.maxPlayerVelocityYDown(), Services.CONFIG.maxPlayerVelocityYUp()),
-                    Mth.clamp(vel.z, -Services.CONFIG.maxPlayerVelocityXZ(), Services.CONFIG.maxPlayerVelocityXZ())
+                    Mth.clamp(vel.x, -CommonConfig.COMMON.maxPlayerVelocityXZ, CommonConfig.COMMON.maxPlayerVelocityXZ),
+                    Mth.clamp(vel.y, CommonConfig.COMMON.maxPlayerVelocityYDown, CommonConfig.COMMON.maxPlayerVelocityYUp),
+                    Mth.clamp(vel.z, -CommonConfig.COMMON.maxPlayerVelocityXZ, CommonConfig.COMMON.maxPlayerVelocityXZ)
             );
             player.hurtMarked = true;
         }
@@ -387,19 +388,19 @@ public class GrabPhysicsManager {
         player.yBodyRot = player.yHeadRot;
         player.yBodyRotO = player.yHeadRotO;
 
-        boolean isCreativeSuper = player.isCreative() && Services.CONFIG.creativeSuperStrength();
+        boolean isCreativeSuper = player.isCreative() && CommonConfig.COMMON.creativeSuperStrength;
 
         double strengthMultiplier = 1.0;
         if (player.hasEffect(MobEffects.DAMAGE_BOOST)) {
             int amplifier = player.getEffect(MobEffects.DAMAGE_BOOST).getAmplifier();
-            if (amplifier == 0) strengthMultiplier = Services.CONFIG.strength1Multiplier();
-            else if (amplifier >= 1) strengthMultiplier = Services.CONFIG.strength2Multiplier();
+            if (amplifier == 0) strengthMultiplier = CommonConfig.COMMON.strength1Multiplier;
+            else if (amplifier >= 1) strengthMultiplier = CommonConfig.COMMON.strength2Multiplier;
         }
-        double actualMaxForce = Services.CONFIG.maxForce() * strengthMultiplier;
+        double actualMaxForce = CommonConfig.COMMON.maxForce * strengthMultiplier;
 
-        Vector3d currentCameraTarget = JOMLConversion.toJOML(player.getEyePosition().add(player.getLookAngle().scale(Math.max(Services.CONFIG.minDistance(), grab.distance))));
+        Vector3d currentCameraTarget = JOMLConversion.toJOML(player.getEyePosition().add(player.getLookAngle().scale(Math.max(CommonConfig.COMMON.minDistance, grab.distance))));
 
-        boolean isGhostEverything = grab.isRotating ? Services.CONFIG.ignoreCollisionsRotationEverything() : Services.CONFIG.ignoreCollisionsGrabEverything();
+        boolean isGhostEverything = grab.isRotating ? CommonConfig.COMMON.ignoreCollisionsRotationEverything : CommonConfig.COMMON.ignoreCollisionsGrabEverything;
 
         boolean wasRotating = grab.isRotating;
         grab.isRotating = grab.rotationTicksLeft > 0;
@@ -482,8 +483,8 @@ public class GrabPhysicsManager {
         }
 
         double tension = currentActualGrabBlockPos.distance(currentCameraTarget);
-        double suspendThresh = isCreativeSuper ? 64.0 : Services.CONFIG.tensionSuspendThreshold();
-        double breakThresh = isCreativeSuper ? 64.0 : Services.CONFIG.tensionBreakThreshold();
+        double suspendThresh = isCreativeSuper ? 64.0 : CommonConfig.COMMON.tensionSuspendThreshold;
+        double breakThresh = isCreativeSuper ? 64.0 : CommonConfig.COMMON.tensionBreakThreshold;
 
         if (tension > suspendThresh) {
             if (tension > breakThresh) {
@@ -493,9 +494,9 @@ public class GrabPhysicsManager {
             suspendPhysics = true;
         }
 
-        boolean ignoreEntities = grab.isRotating ? Services.CONFIG.ignoreCollisionsRotationEntities() : Services.CONFIG.ignoreCollisionsGrabEntities();
-        boolean ignoreOtherPlayers = grab.isRotating ? Services.CONFIG.ignoreCollisionsRotationOtherPlayers() : Services.CONFIG.ignoreCollisionsGrabOtherPlayers();
-        boolean ignoreSelf = grab.isRotating ? Services.CONFIG.ignoreCollisionsRotationSelf() : Services.CONFIG.ignoreCollisionsGrabSelf();
+        boolean ignoreEntities = grab.isRotating ? CommonConfig.COMMON.ignoreCollisionsRotationEntities : CommonConfig.COMMON.ignoreCollisionsGrabEntities;
+        boolean ignoreOtherPlayers = grab.isRotating ? CommonConfig.COMMON.ignoreCollisionsRotationOtherPlayers : CommonConfig.COMMON.ignoreCollisionsGrabOtherPlayers;
+        boolean ignoreSelf = grab.isRotating ? CommonConfig.COMMON.ignoreCollisionsRotationSelf : CommonConfig.COMMON.ignoreCollisionsGrabSelf;
 
         byte currentMask = 0;
         if (isGhostEverything) currentMask |= 1;
@@ -525,8 +526,8 @@ public class GrabPhysicsManager {
             Vector3d eulers = new Vector3d();
             relativeRot.getEulerAnglesXYZ(eulers);
 
-            double grabStable = isCreativeSuper ? 1.0 : Math.pow(Services.CONFIG.grabStabilization(), 3);
-            double rotStable  = isCreativeSuper ? 1.0 : Math.pow(Services.CONFIG.rotationStabilization(), 3);
+            double grabStable = isCreativeSuper ? 1.0 : Math.pow(CommonConfig.COMMON.grabStabilization, 3);
+            double rotStable  = isCreativeSuper ? 1.0 : Math.pow(CommonConfig.COMMON.rotationStabilization, 3);
             double mass       = grab.subLevel.getMassTracker().getMass();
 
             double horizontalSpeed = Math.sqrt(pVel.x * pVel.x + pVel.z * pVel.z);
@@ -535,9 +536,9 @@ public class GrabPhysicsManager {
             double speedMultiplier = 1.0 + (effectiveSpeed * 15.0);
             speedMultiplier = Math.min(speedMultiplier, 8.0);
 
-            double baseStiffness   = isCreativeSuper ? Services.CONFIG.stiffness() * 10.0 : Services.CONFIG.stiffness();
-            double linearDamping   = isCreativeSuper ? Services.CONFIG.damping() * 10.0 : Services.CONFIG.damping();
-            double angularDamping  = isCreativeSuper ? Services.CONFIG.angularDamping() * 10.0 : Services.CONFIG.angularDamping();
+            double baseStiffness   = isCreativeSuper ? CommonConfig.COMMON.stiffness * 10.0 : CommonConfig.COMMON.stiffness;
+            double linearDamping   = isCreativeSuper ? CommonConfig.COMMON.damping * 10.0 : CommonConfig.COMMON.damping;
+            double angularDamping  = isCreativeSuper ? CommonConfig.COMMON.angularDamping * 10.0 : CommonConfig.COMMON.angularDamping;
 
             double baseAngularForce   = actualMaxForce * 0.15;
             double stableAngularForce = actualMaxForce * (10.0 + mass * 0.5);

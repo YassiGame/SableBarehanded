@@ -1,5 +1,6 @@
 package dev.juaanp.sablebarehanded.client;
 
+import dev.juaanp.sablebarehanded.config.CommonConfig;
 import dev.juaanp.sablebarehanded.mixin.accesor.MultiPlayerGameModeAccessor;
 import dev.juaanp.sablebarehanded.platform.Services;
 import dev.juaanp.sablebarehanded.util.AssemblyBehaviorHelper;
@@ -17,18 +18,12 @@ import org.joml.Vector3d;
 public class ClientGrabTracker {
     public static boolean isHoldingGrab = false;
     public static boolean isPulling = false;
-
     public static double pendingYaw = 0.0;
     public static double pendingPitch = 0.0;
     public static int assemblyChargeTicks = 0;
     public static BlockPos assemblyTargetPos = null;
-
     public static int currentRequiredAssemblyTicks = 20;
     public static double initialAssemblyDistance = 0.0;
-
-    private static final double PULL_THRESHOLD = 0.05;
-    private static final double PULL_RESISTANCE_MULTIPLIER = 0.6;
-    private static final double PLAYER_MOVEMENT_DAMPING = 0.5;
 
     public static void resetAssemblyCharge() {
         assemblyChargeTicks = 0;
@@ -76,9 +71,9 @@ public class ClientGrabTracker {
                     Vector3d hitPos = new Vector3d(blockHit.getLocation().x, blockHit.getLocation().y, blockHit.getLocation().z);
 
                     boolean preventDueToMining = false;
-                    if (Services.CONFIG.preventAssemblyWhenMining() && mc.gameMode != null) {
+                    if (CommonConfig.CLIENT.preventAssemblyWhenMining && mc.gameMode != null) {
                         float miningProgress = ((MultiPlayerGameModeAccessor) mc.gameMode).getDestroyProgress();
-                        if (miningProgress > Services.CONFIG.barehandedAssemblyMiningThreshold()) preventDueToMining = true;
+                        if (miningProgress > CommonConfig.CLIENT.barehandedAssemblyMiningThreshold) preventDueToMining = true;
                     }
 
                     if (Sable.HELPER.getContaining(mc.level, hitPos) != null) {
@@ -87,7 +82,7 @@ public class ClientGrabTracker {
                         if (mc.gameMode != null) mc.gameMode.stopDestroyBlock();
                         resetAssemblyCharge();
 
-                    } else if (isSneaking && Services.CONFIG.enableBarehandedAssembly() && distanceToHit <= Services.CONFIG.barehandedAssemblyMaxDistance() && !isIgnored && !preventDueToMining) {
+                    } else if (isSneaking && CommonConfig.COMMON.enableBarehandedAssembly && distanceToHit <= CommonConfig.COMMON.barehandedAssemblyMaxDistance && !isIgnored && !preventDueToMining) {
 
                         assemblyTargetPos = currentPos;
                         assemblyChargeTicks = 1;
@@ -111,7 +106,7 @@ public class ClientGrabTracker {
                 Vec3 playerEyePos = mc.player.getEyePosition();
                 double currentDist = playerEyePos.distanceTo(targetCenter);
 
-                if (currentDist > Services.CONFIG.barehandedAssemblyMaxDistance() + 1.5) {
+                if (currentDist > CommonConfig.COMMON.barehandedAssemblyMaxDistance + 1.5) {
                     resetAssemblyCharge();
                     return;
                 }
@@ -119,17 +114,17 @@ public class ClientGrabTracker {
                 double stretch = currentDist - initialAssemblyDistance;
                 boolean requiresPulling = currentRequiredAssemblyTicks > 2;
 
-                if (!requiresPulling || stretch > PULL_THRESHOLD) {
+                if (!requiresPulling || stretch > CommonConfig.COMMON.pullThreshold) {
                     isPulling = true;
                     assemblyChargeTicks++;
 
                     if (requiresPulling) {
                         Vec3 pullDirection = targetCenter.subtract(playerEyePos).normalize();
-                        double pullStrength = stretch * PULL_RESISTANCE_MULTIPLIER;
+                        double pullStrength = stretch * CommonConfig.COMMON.pullResistanceMultiplier;
                         Vec3 pullForce = pullDirection.scale(pullStrength);
                         Vec3 currentMovement = mc.player.getDeltaMovement();
 
-                        mc.player.setDeltaMovement(currentMovement.scale(PLAYER_MOVEMENT_DAMPING).add(pullForce));
+                        mc.player.setDeltaMovement(currentMovement.scale(CommonConfig.COMMON.assemblyMovementDamping).add(pullForce));
                     }
                 } else {
                     isPulling = false;
@@ -154,7 +149,7 @@ public class ClientGrabTracker {
 
     public static void renderSableOverlay(GuiGraphics graphics) {
         if (!isHoldingGrab) return;
-        if (!Services.CONFIG.enableRotation()) return;
+        if (!CommonConfig.COMMON.enableRotation) return;
 
         Minecraft mc = Minecraft.getInstance();
         int screenWidth = mc.getWindow().getGuiScaledWidth();
@@ -174,7 +169,7 @@ public class ClientGrabTracker {
         }
 
         boolean isKeyDown = KeyBindings.PIVOT_KEY.isDown();
-        boolean isCenter = Services.CONFIG.rotateAroundCenter() ^ isKeyDown;
+        boolean isCenter = CommonConfig.CLIENT.rotateAroundCenter ^ isKeyDown;
 
         String text = "Rotation Pivot: " + (isCenter ? "CENTER OF MASS" : "GRAB POINT");
         int color = isCenter ? 0x55FF55 : 0xFFAA00;
@@ -206,11 +201,11 @@ public class ClientGrabTracker {
         boolean bothDown = mc.options.keyAttack.isDown() && mc.options.keyUse.isDown();
         boolean isSneaking = mc.player.isShiftKeyDown();
 
-        if (bothDown && isSneaking && Services.CONFIG.enableBarehandedAssembly() && mc.player.getMainHandItem().isEmpty()) {
+        if (bothDown && isSneaking && CommonConfig.COMMON.enableBarehandedAssembly && mc.player.getMainHandItem().isEmpty()) {
 
-            if (Services.CONFIG.preventAssemblyWhenMining() && mc.gameMode != null) {
+            if (CommonConfig.CLIENT.preventAssemblyWhenMining && mc.gameMode != null) {
                 float miningProgress = ((MultiPlayerGameModeAccessor) mc.gameMode).getDestroyProgress();
-                if (miningProgress > Services.CONFIG.barehandedAssemblyMiningThreshold()) {
+                if (miningProgress > CommonConfig.CLIENT.barehandedAssemblyMiningThreshold) {
                     return false;
                 }
             }
@@ -227,7 +222,7 @@ public class ClientGrabTracker {
 
                 BlockState targetState = mc.level.getBlockState(currentPos);
 
-                if (distanceToHit <= Services.CONFIG.barehandedAssemblyMaxDistance() && !AssemblyBehaviorHelper.isIgnored(mc.level, currentPos, targetState)) {
+                if (distanceToHit <= CommonConfig.COMMON.barehandedAssemblyMaxDistance && !AssemblyBehaviorHelper.isIgnored(mc.level, currentPos, targetState)) {
                     Vector3d hitPos = new Vector3d(blockHit.getLocation().x, blockHit.getLocation().y, blockHit.getLocation().z);
                     if (Sable.HELPER.getContaining(mc.level, hitPos) == null) {
                         return true;

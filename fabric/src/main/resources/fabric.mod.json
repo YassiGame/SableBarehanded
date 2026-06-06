@@ -33,9 +33,7 @@
         "fabric-api": "*",
         "minecraft": "${minecraft_version}",
         "java": ">=${java_version}",
-        "sable": ">=${sable_version}"
-    },
-    "suggests": {
+        "sable": ">=${sable_version}",
         "cloth-config": ">=${clothconfig_version}"
     }
 }

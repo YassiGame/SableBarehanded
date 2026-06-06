@@ -1,12 +1,13 @@
 package dev.juaanp.sablebarehanded.client;
 
 import dev.juaanp.sablebarehanded.Constants;
-import dev.juaanp.sablebarehanded.config.NeoForgeGrabConfig;
+import dev.juaanp.sablebarehanded.config.CommonConfig;
 import dev.juaanp.sablebarehanded.platform.Services;
 import net.minecraft.client.Minecraft;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
@@ -25,7 +26,7 @@ public class NeoForgeClientEvents {
         boolean isRotateKeyDown = KeyBindings.ROTATE_KEY.isDown();
 
         if (isRotateKeyDown || ClientGrabTracker.pendingYaw != 0.0 || ClientGrabTracker.pendingPitch != 0.0) {
-            boolean useCenter = Services.CONFIG.rotateAroundCenter() ^ KeyBindings.PIVOT_KEY.isDown();
+            boolean useCenter = CommonConfig.CLIENT.rotateAroundCenter ^ KeyBindings.PIVOT_KEY.isDown();
             Services.NETWORK.sendRotateGrab(ClientGrabTracker.pendingYaw, ClientGrabTracker.pendingPitch, useCenter);
 
             ClientGrabTracker.pendingYaw = 0.0;
@@ -50,5 +51,10 @@ public class NeoForgeClientEvents {
     @SubscribeEvent
     public static void onRenderHUD(net.neoforged.neoforge.client.event.RenderGuiEvent.Post event) {
         ClientGrabTracker.renderSableOverlay(event.getGuiGraphics());
+    }
+
+    @SubscribeEvent
+    public static void onClientLogout(ClientPlayerNetworkEvent.LoggingOut event) {
+        CommonConfig.load();
     }
 }
