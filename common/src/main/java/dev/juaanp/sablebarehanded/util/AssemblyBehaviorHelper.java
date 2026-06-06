@@ -16,7 +16,6 @@ public class AssemblyBehaviorHelper {
 
     public static boolean isLiftableDecor(Level level, BlockPos pos, BlockState state) {
         if (state.isAir() || state.getDestroySpeed(level, pos) < 0.0F || !state.getFluidState().isEmpty()) return false;
-
         return state.getCollisionShape(level, pos).isEmpty();
     }
 
@@ -42,10 +41,29 @@ public class AssemblyBehaviorHelper {
                 blocks.add(basePos.relative(net.minecraft.world.level.block.ChestBlock.getConnectedDirection(baseState)));
             }
         }
+        else if (baseState.getBlock() instanceof net.minecraft.world.level.block.DoorBlock) {
+            var half = baseState.getValue(net.minecraft.world.level.block.DoorBlock.HALF);
+            if (half == net.minecraft.world.level.block.state.properties.DoubleBlockHalf.LOWER) {
+                blocks.add(basePos.above());
+            } else {
+                blocks.add(basePos.below());
+            }
+        }
+        else if (baseState.getBlock() instanceof net.minecraft.world.level.block.BedBlock) {
+            var part = baseState.getValue(net.minecraft.world.level.block.BedBlock.PART);
+            var facing = baseState.getValue(net.minecraft.world.level.block.BedBlock.FACING);
+            if (part == net.minecraft.world.level.block.state.properties.BedPart.HEAD) {
+                blocks.add(basePos.relative(facing.getOpposite()));
+            } else {
+                blocks.add(basePos.relative(facing));
+            }
+        }
 
         BlockPos currentUp = basePos.above();
         while (isLiftableDecor(level, currentUp, level.getBlockState(currentUp))) {
-            blocks.add(currentUp);
+            if (!blocks.contains(currentUp)) {
+                blocks.add(currentUp);
+            }
             currentUp = currentUp.above();
         }
 
