@@ -254,6 +254,8 @@ public class GrabPhysicsManager {
             boolean isFastLift = AssemblyBehaviorHelper.isFastLift(level, pos, mainState);
 
             if (!isFastLift) {
+                net.minecraft.world.level.block.SoundType soundType = mainState.getSoundType();
+                level.playSound(null, pos, soundType.getBreakSound(), SoundSource.BLOCKS, 1.0f, 1.0f);
                 level.levelEvent(2001, pos, net.minecraft.world.level.block.Block.getId(mainState));
             } else {
                 level.playSound(null, pos, net.minecraft.sounds.SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS, 0.2f, 0.5f);
@@ -261,9 +263,24 @@ public class GrabPhysicsManager {
 
             for (BlockPos bPos : blocks) {
                 level.updateNeighborsAt(bPos, net.minecraft.world.level.block.Blocks.AIR);
+                for (net.minecraft.core.Direction dir : net.minecraft.core.Direction.values()) {
+                    BlockPos neighbor = bPos.relative(dir);
+                    level.neighborChanged(neighbor, net.minecraft.world.level.block.Blocks.AIR, bPos);
+
+                    net.minecraft.world.level.material.FluidState fluid = level.getFluidState(neighbor);
+                    if (!fluid.isEmpty()) {
+                        level.scheduleTick(neighbor, fluid.getType(), fluid.getType().getTickDelay(level));
+                    }
+
+                    net.minecraft.world.level.block.state.BlockState neighborState = level.getBlockState(neighbor);
+                    if (neighborState.getBlock() instanceof net.minecraft.world.level.block.FallingBlock) {
+                        level.scheduleTick(neighbor, neighborState.getBlock(), 2);
+                    }
+                }
             }
 
             ServerSubLevelContainer container = (ServerSubLevelContainer) SubLevelContainer.getContainer(level);
+
             if (container != null) {
                 container.physicsSystem().getPipeline().wakeUp(serverSubLevel);
             }

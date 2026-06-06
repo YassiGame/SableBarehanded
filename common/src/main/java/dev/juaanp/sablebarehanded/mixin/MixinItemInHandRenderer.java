@@ -61,7 +61,8 @@ public class MixinItemInHandRenderer {
         float t = Mth.lerp(partialTicks, this.oldTransitionProgress, this.transitionProgress);
 
         int charge = ClientGrabTracker.assemblyChargeTicks;
-        if (charge > 0 && stack.isEmpty()) {
+
+        if (charge > 0 && ClientGrabTracker.isPulling && stack.isEmpty()) {
 
             float maxTicks = Math.max(1.0F, (float) ClientGrabTracker.currentRequiredAssemblyTicks);
             float progress = Math.min((float) charge / maxTicks, 1.0F);

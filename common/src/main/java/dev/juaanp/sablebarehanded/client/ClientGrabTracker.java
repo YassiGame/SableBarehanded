@@ -16,18 +16,25 @@ import org.joml.Vector3d;
 
 public class ClientGrabTracker {
     public static boolean isHoldingGrab = false;
+    public static boolean isPulling = false;
 
     public static double pendingYaw = 0.0;
     public static double pendingPitch = 0.0;
     public static int assemblyChargeTicks = 0;
     public static BlockPos assemblyTargetPos = null;
+
     public static int currentRequiredAssemblyTicks = 20;
     public static double initialAssemblyDistance = 0.0;
+
+    private static final double PULL_THRESHOLD = 0.05;
+    private static final double PULL_RESISTANCE_MULTIPLIER = 0.6;
+    private static final double PLAYER_MOVEMENT_DAMPING = 0.5;
 
     public static void resetAssemblyCharge() {
         assemblyChargeTicks = 0;
         assemblyTargetPos = null;
         initialAssemblyDistance = 0.0;
+        isPulling = false;
     }
 
     public static void clientTick() {
@@ -54,78 +61,87 @@ public class ClientGrabTracker {
         boolean isSneaking = mc.player.isShiftKeyDown();
 
         if (bothDown && !isHoldingGrab && mc.player.getMainHandItem().isEmpty()) {
-            double reach = mc.player.getAttribute(Attributes.BLOCK_INTERACTION_RANGE).getValue();
-            HitResult hit = mc.player.pick(reach, 0.0f, false);
 
-            if (hit.getType() == HitResult.Type.BLOCK) {
-                BlockHitResult blockHit = (BlockHitResult) hit;
-                BlockPos currentPos = blockHit.getBlockPos();
+            if (assemblyTargetPos == null) {
+                double reach = mc.player.getAttribute(Attributes.BLOCK_INTERACTION_RANGE).getValue();
+                HitResult hit = mc.player.pick(reach, 0.0f, false);
 
-                Vec3 blockCenter = Vec3.atCenterOf(currentPos);
-                double distanceToHit = mc.player.getEyePosition().distanceTo(blockCenter);
+                if (hit.getType() == HitResult.Type.BLOCK) {
+                    BlockHitResult blockHit = (BlockHitResult) hit;
+                    BlockPos currentPos = blockHit.getBlockPos();
+                    Vec3 blockCenter = Vec3.atCenterOf(currentPos);
+                    double distanceToHit = mc.player.getEyePosition().distanceTo(blockCenter);
+                    BlockState state = mc.level.getBlockState(currentPos);
+                    boolean isIgnored = AssemblyBehaviorHelper.isIgnored(mc.level, currentPos, state);
+                    Vector3d hitPos = new Vector3d(blockHit.getLocation().x, blockHit.getLocation().y, blockHit.getLocation().z);
 
-                BlockState state = mc.level.getBlockState(currentPos);
-                boolean isIgnored = AssemblyBehaviorHelper.isIgnored(mc.level, currentPos, state);
-
-                Vector3d hitPos = new Vector3d(blockHit.getLocation().x, blockHit.getLocation().y, blockHit.getLocation().z);
-
-                boolean preventDueToMining = false;
-                if (Services.CONFIG.preventAssemblyWhenMining() && mc.gameMode != null) {
-                    float miningProgress = ((MultiPlayerGameModeAccessor) mc.gameMode).getDestroyProgress();
-                    if (miningProgress > Services.CONFIG.barehandedAssemblyMiningThreshold()) {
-                        preventDueToMining = true;
+                    boolean preventDueToMining = false;
+                    if (Services.CONFIG.preventAssemblyWhenMining() && mc.gameMode != null) {
+                        float miningProgress = ((MultiPlayerGameModeAccessor) mc.gameMode).getDestroyProgress();
+                        if (miningProgress > Services.CONFIG.barehandedAssemblyMiningThreshold()) preventDueToMining = true;
                     }
-                }
 
-                if (Sable.HELPER.getContaining(mc.level, hitPos) != null) {
-                    Services.NETWORK.sendRequestGrab(currentPos);
-                    isHoldingGrab = true;
-                    if (mc.gameMode != null) mc.gameMode.stopDestroyBlock();
-                    resetAssemblyCharge();
+                    if (Sable.HELPER.getContaining(mc.level, hitPos) != null) {
+                        Services.NETWORK.sendRequestGrab(currentPos);
+                        isHoldingGrab = true;
+                        if (mc.gameMode != null) mc.gameMode.stopDestroyBlock();
+                        resetAssemblyCharge();
 
-                } else if (isSneaking && Services.CONFIG.enableBarehandedAssembly() && distanceToHit <= Services.CONFIG.barehandedAssemblyMaxDistance() && !isIgnored && !preventDueToMining) {
+                    } else if (isSneaking && Services.CONFIG.enableBarehandedAssembly() && distanceToHit <= Services.CONFIG.barehandedAssemblyMaxDistance() && !isIgnored && !preventDueToMining) {
 
-                    if (assemblyTargetPos == null || !assemblyTargetPos.equals(currentPos)) {
                         assemblyTargetPos = currentPos;
                         assemblyChargeTicks = 1;
-
-                        initialAssemblyDistance = mc.player.getEyePosition().distanceTo(Vec3.atCenterOf(currentPos));
+                        isPulling = false;
+                        initialAssemblyDistance = mc.player.getEyePosition().distanceTo(blockCenter);
 
                         var blocksToAssemble = AssemblyBehaviorHelper.getConnectedBlocks(mc.level, currentPos);
                         currentRequiredAssemblyTicks = AssemblyBehaviorHelper.calculateAssemblyTicks(mc.player, mc.level, blocksToAssemble);
-                    } else {
-                        assemblyChargeTicks++;
 
-                        Vec3 targetCenter = Vec3.atCenterOf(assemblyTargetPos);
-                        Vec3 playerEyePos = mc.player.getEyePosition();
-                        double currentDist = playerEyePos.distanceTo(targetCenter);
-
-                        if (currentDist > initialAssemblyDistance) {
-                            Vec3 pullDirection = targetCenter.subtract(playerEyePos).normalize();
-
-                            double stretch = currentDist - initialAssemblyDistance;
-
-                            double pullStrength = stretch * 0.3;
-                            Vec3 pullForce = pullDirection.scale(pullStrength);
-
-                            Vec3 currentMovement = mc.player.getDeltaMovement();
-                            mc.player.setDeltaMovement(currentMovement.scale(0.8).add(pullForce));
-                        }
+                        if (mc.gameMode != null) mc.gameMode.stopDestroyBlock();
                     }
+                }
+            }
+            else {
+                if (!isSneaking) {
+                    resetAssemblyCharge();
+                    return;
+                }
 
-                    if (mc.gameMode != null) mc.gameMode.stopDestroyBlock();
+                Vec3 targetCenter = Vec3.atCenterOf(assemblyTargetPos);
+                Vec3 playerEyePos = mc.player.getEyePosition();
+                double currentDist = playerEyePos.distanceTo(targetCenter);
 
-                    if (assemblyChargeTicks >= currentRequiredAssemblyTicks) {
-                        Services.NETWORK.sendAssembleGrabRequest(assemblyTargetPos);
-                        isHoldingGrab = true;
-                        resetAssemblyCharge();
+                if (currentDist > Services.CONFIG.barehandedAssemblyMaxDistance() + 1.5) {
+                    resetAssemblyCharge();
+                    return;
+                }
+
+                double stretch = currentDist - initialAssemblyDistance;
+                boolean requiresPulling = currentRequiredAssemblyTicks > 2;
+
+                if (!requiresPulling || stretch > PULL_THRESHOLD) {
+                    isPulling = true;
+                    assemblyChargeTicks++;
+
+                    if (requiresPulling) {
+                        Vec3 pullDirection = targetCenter.subtract(playerEyePos).normalize();
+                        double pullStrength = stretch * PULL_RESISTANCE_MULTIPLIER;
+                        Vec3 pullForce = pullDirection.scale(pullStrength);
+                        Vec3 currentMovement = mc.player.getDeltaMovement();
+
+                        mc.player.setDeltaMovement(currentMovement.scale(PLAYER_MOVEMENT_DAMPING).add(pullForce));
                     }
-
                 } else {
+                    isPulling = false;
+                }
+
+                if (mc.gameMode != null) mc.gameMode.stopDestroyBlock();
+
+                if (assemblyChargeTicks >= currentRequiredAssemblyTicks) {
+                    Services.NETWORK.sendAssembleGrabRequest(assemblyTargetPos);
+                    isHoldingGrab = true;
                     resetAssemblyCharge();
                 }
-            } else {
-                resetAssemblyCharge();
             }
         } else if (!bothDown && isHoldingGrab) {
             isHoldingGrab = false;
