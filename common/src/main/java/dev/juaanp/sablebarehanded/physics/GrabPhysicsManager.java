@@ -26,12 +26,14 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.joml.AxisAngle4d;
 import org.joml.Quaterniond;
 import org.joml.Vector3d;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -229,55 +231,44 @@ public class GrabPhysicsManager {
         Level level = player.level();
         if (level.isClientSide() || ACTIVE_GRABS.containsKey(player.getUUID()) || !player.getMainHandItem().isEmpty()) return;
 
-        double reach = player.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.BLOCK_INTERACTION_RANGE).getValue() + 2.0;
+        double reach = player.getAttribute(Attributes.BLOCK_INTERACTION_RANGE).getValue() + 2.0;
         if (player.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) > (reach * reach)) return;
 
         double maxDist = Services.CONFIG.barehandedAssemblyMaxDistance() + 1.0;
-        if (player.getEyePosition().distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(pos)) > (maxDist * maxDist)) return;
+        if (player.getEyePosition().distanceToSqr(Vec3.atCenterOf(pos)) > (maxDist * maxDist)) return;
 
-        net.minecraft.world.level.block.state.BlockState state = level.getBlockState(pos);
-        if (dev.juaanp.sablebarehanded.util.AssemblyBehaviorHelper.isIgnored(level, pos, state)) return;
+        BlockState mainState = level.getBlockState(pos);
+        if (AssemblyBehaviorHelper.isIgnored(level, pos, mainState)) return;
 
-        java.util.List<BlockPos> blocks = new java.util.ArrayList<>();
-        blocks.add(pos);
+        List<BlockPos> blocks = AssemblyBehaviorHelper.getConnectedBlocks(level, pos);
 
-        if (state.getBlock() instanceof net.minecraft.world.level.block.ChestBlock) {
-            net.minecraft.world.level.block.state.properties.ChestType type = state.getValue(net.minecraft.world.level.block.ChestBlock.TYPE);
-            if (type != net.minecraft.world.level.block.state.properties.ChestType.SINGLE) {
-                blocks.add(pos.relative(net.minecraft.world.level.block.ChestBlock.getConnectedDirection(state)));
-            }
-        }
-        else if (dev.juaanp.sablebarehanded.util.AssemblyBehaviorHelper.isLiftableDecor(level.getBlockState(pos.above()))) {
-            blocks.add(pos.above());
-        }
-        else if (dev.juaanp.sablebarehanded.util.AssemblyBehaviorHelper.isLiftableDecor(state)) {
-            blocks.add(pos.below());
+        for (BlockPos bPos : blocks) {
+            if (Sable.HELPER.getContaining(level, bPos) != null) return;
         }
 
-        if (dev.ryanhcode.sable.Sable.HELPER.getContaining(level, pos) != null) return;
+        BoundingBox3i bounds = BoundingBox3i.from(blocks);
+        SubLevel subLevel = SubLevelAssemblyHelper.assembleBlocks((ServerLevel) level, pos, blocks, bounds);
 
-        dev.ryanhcode.sable.companion.math.BoundingBox3i bounds = dev.ryanhcode.sable.companion.math.BoundingBox3i.from(blocks);
-        dev.ryanhcode.sable.sublevel.SubLevel subLevel = dev.ryanhcode.sable.api.SubLevelAssemblyHelper.assembleBlocks((net.minecraft.server.level.ServerLevel) level, pos, blocks, bounds);
+        if (subLevel instanceof ServerSubLevel serverSubLevel) {
 
-        if (subLevel instanceof dev.ryanhcode.sable.sublevel.ServerSubLevel serverSubLevel) {
+            boolean isFastLift = AssemblyBehaviorHelper.isFastLift(level, pos, mainState);
 
-            boolean isFastLift = dev.juaanp.sablebarehanded.util.AssemblyBehaviorHelper.isFastLift(level, pos, state);
             if (!isFastLift) {
-                level.playSound(null, pos, net.minecraft.sounds.SoundEvents.ZOMBIE_BREAK_WOODEN_DOOR, net.minecraft.sounds.SoundSource.PLAYERS, 0.5f, 1.5f);
+                level.levelEvent(2001, pos, net.minecraft.world.level.block.Block.getId(mainState));
             } else {
-                level.playSound(null, pos, net.minecraft.sounds.SoundEvents.ITEM_PICKUP, net.minecraft.sounds.SoundSource.PLAYERS, 0.2f, 0.5f);
+                level.playSound(null, pos, SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS, 0.2f, 0.5f);
             }
 
-            dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer container = (dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer) dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(level);
+            ServerSubLevelContainer container = (ServerSubLevelContainer) SubLevelContainer.getContainer(level);
             if (container != null) {
                 container.physicsSystem().getPipeline().wakeUp(serverSubLevel);
             }
 
-            org.joml.Vector3d globalVec = new org.joml.Vector3d(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
-            org.joml.Vector3d localGrabBlock = serverSubLevel.logicalPose().transformPositionInverse(globalVec, new org.joml.Vector3d());
+            Vector3d globalVec = new Vector3d(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
+            Vector3d localGrabBlock = serverSubLevel.logicalPose().transformPositionInverse(globalVec, new Vector3d());
 
             performGrab(player, serverSubLevel, localGrabBlock);
-            dev.juaanp.sablebarehanded.api.SableBarehandedEvents.fireOnGrab(player, serverSubLevel);
+            SableBarehandedEvents.fireOnGrab(player, serverSubLevel);
         }
     }
 

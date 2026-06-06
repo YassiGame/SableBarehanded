@@ -7,7 +7,6 @@ import dev.ryanhcode.sable.Sable;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
@@ -54,18 +53,18 @@ public class ClientGrabTracker {
         boolean isSneaking = mc.player.isShiftKeyDown();
 
         if (bothDown && !isHoldingGrab && mc.player.getMainHandItem().isEmpty()) {
-            double reach = mc.player.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.BLOCK_INTERACTION_RANGE).getValue();
-            net.minecraft.world.phys.HitResult hit = mc.player.pick(reach, 0.0f, false);
+            double reach = mc.player.getAttribute(Attributes.BLOCK_INTERACTION_RANGE).getValue();
+            HitResult hit = mc.player.pick(reach, 0.0f, false);
 
-            if (hit.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK) {
-                net.minecraft.world.phys.BlockHitResult blockHit = (net.minecraft.world.phys.BlockHitResult) hit;
-                net.minecraft.core.BlockPos currentPos = blockHit.getBlockPos();
+            if (hit.getType() == HitResult.Type.BLOCK) {
+                BlockHitResult blockHit = (BlockHitResult) hit;
+                BlockPos currentPos = blockHit.getBlockPos();
 
-                net.minecraft.world.phys.Vec3 blockCenter = net.minecraft.world.phys.Vec3.atCenterOf(currentPos);
+                Vec3 blockCenter = Vec3.atCenterOf(currentPos);
                 double distanceToHit = mc.player.getEyePosition().distanceTo(blockCenter);
 
-                net.minecraft.world.level.block.state.BlockState state = mc.level.getBlockState(currentPos);
-                boolean isIgnored = dev.juaanp.sablebarehanded.util.AssemblyBehaviorHelper.isIgnored(mc.level, currentPos, state);
+                BlockState state = mc.level.getBlockState(currentPos);
+                boolean isIgnored = AssemblyBehaviorHelper.isIgnored(mc.level, currentPos, state);
 
                 Vector3d hitPos = new Vector3d(blockHit.getLocation().x, blockHit.getLocation().y, blockHit.getLocation().z);
 
@@ -89,29 +88,8 @@ public class ClientGrabTracker {
                         assemblyTargetPos = currentPos;
                         assemblyChargeTicks = 1;
 
-                        boolean isCreativeSuper = mc.player.isCreative() && Services.CONFIG.creativeSuperStrength();
-
-                        if (isCreativeSuper) {
-                            currentRequiredAssemblyTicks = 1;
-                        }
-                        else if (dev.juaanp.sablebarehanded.util.AssemblyBehaviorHelper.isFastLift(mc.level, currentPos, state)) {
-                            currentRequiredAssemblyTicks = 2;
-                        } else {
-                            float progressPerTick = state.getDestroyProgress(mc.player, mc.level, currentPos);
-
-                            if (progressPerTick <= 0.0F) {
-                                currentRequiredAssemblyTicks = Integer.MAX_VALUE;
-                            } else {
-                                int vanillaTicks = (int) Math.ceil(1.0F / progressPerTick);
-                                double strengthMulti = 1.0;
-                                var strengthEffect = mc.player.getEffect(net.minecraft.world.effect.MobEffects.DAMAGE_BOOST);
-                                if (strengthEffect != null) {
-                                    int amp = strengthEffect.getAmplifier();
-                                    strengthMulti = amp == 0 ? Services.CONFIG.strength1Multiplier() : Services.CONFIG.strength2Multiplier();
-                                }
-                                currentRequiredAssemblyTicks = (int) Math.max(1, (vanillaTicks / strengthMulti) / Services.CONFIG.barehandedAssemblySpeedMultiplier());
-                            }
-                        }
+                        var blocksToAssemble = AssemblyBehaviorHelper.getConnectedBlocks(mc.level, currentPos);
+                        currentRequiredAssemblyTicks = AssemblyBehaviorHelper.calculateAssemblyTicks(mc.player, mc.level, blocksToAssemble);
                     } else {
                         assemblyChargeTicks++;
                     }
@@ -211,7 +189,6 @@ public class ClientGrabTracker {
 
                 Vec3 blockCenter = Vec3.atCenterOf(currentPos);
                 double distanceToHit = mc.player.getEyePosition().distanceTo(blockCenter);
-                boolean isUnbreakable = mc.level.getBlockState(currentPos).getDestroySpeed(mc.level, currentPos) < 0.0F;
 
                 BlockState targetState = mc.level.getBlockState(currentPos);
 
