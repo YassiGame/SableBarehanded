@@ -101,6 +101,8 @@ processResources {
             'sable_version': sable_version,
             'sable_version_range': sable_version_range,
             'clothconfig_version': clothconfig_version,
+            'clothconfig_version_range': clothconfig_version,
+            'clothconfig_neoforge_version_range': clothconfig_neoforge_version_range,
             'modmenu_version': modmenu_version,
             'credits'                      : credits,
             'java_version'                 : java_version
