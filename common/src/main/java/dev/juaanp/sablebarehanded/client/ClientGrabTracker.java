@@ -21,12 +21,13 @@ public class ClientGrabTracker {
     public static double pendingPitch = 0.0;
     public static int assemblyChargeTicks = 0;
     public static BlockPos assemblyTargetPos = null;
-
     public static int currentRequiredAssemblyTicks = 20;
+    public static double initialAssemblyDistance = 0.0;
 
     public static void resetAssemblyCharge() {
         assemblyChargeTicks = 0;
         assemblyTargetPos = null;
+        initialAssemblyDistance = 0.0;
     }
 
     public static void clientTick() {
@@ -88,10 +89,28 @@ public class ClientGrabTracker {
                         assemblyTargetPos = currentPos;
                         assemblyChargeTicks = 1;
 
+                        initialAssemblyDistance = mc.player.getEyePosition().distanceTo(Vec3.atCenterOf(currentPos));
+
                         var blocksToAssemble = AssemblyBehaviorHelper.getConnectedBlocks(mc.level, currentPos);
                         currentRequiredAssemblyTicks = AssemblyBehaviorHelper.calculateAssemblyTicks(mc.player, mc.level, blocksToAssemble);
                     } else {
                         assemblyChargeTicks++;
+
+                        Vec3 targetCenter = Vec3.atCenterOf(assemblyTargetPos);
+                        Vec3 playerEyePos = mc.player.getEyePosition();
+                        double currentDist = playerEyePos.distanceTo(targetCenter);
+
+                        if (currentDist > initialAssemblyDistance) {
+                            Vec3 pullDirection = targetCenter.subtract(playerEyePos).normalize();
+
+                            double stretch = currentDist - initialAssemblyDistance;
+
+                            double pullStrength = stretch * 0.3;
+                            Vec3 pullForce = pullDirection.scale(pullStrength);
+
+                            Vec3 currentMovement = mc.player.getDeltaMovement();
+                            mc.player.setDeltaMovement(currentMovement.scale(0.8).add(pullForce));
+                        }
                     }
 
                     if (mc.gameMode != null) mc.gameMode.stopDestroyBlock();
