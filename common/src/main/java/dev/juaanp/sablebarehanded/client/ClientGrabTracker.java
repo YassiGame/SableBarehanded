@@ -2,6 +2,7 @@ package dev.juaanp.sablebarehanded.client;
 
 import dev.juaanp.sablebarehanded.config.CommonConfig;
 import dev.juaanp.sablebarehanded.mixin.accesor.MultiPlayerGameModeAccessor;
+import dev.juaanp.sablebarehanded.physics.GrabPhysicsManager;
 import dev.juaanp.sablebarehanded.platform.Services;
 import dev.juaanp.sablebarehanded.util.AssemblyBehaviorHelper;
 import dev.ryanhcode.sable.Sable;
@@ -58,7 +59,7 @@ public class ClientGrabTracker {
         if (bothDown && !isHoldingGrab && mc.player.getMainHandItem().isEmpty()) {
 
             if (assemblyTargetPos == null) {
-                double reach = mc.player.getAttribute(Attributes.BLOCK_INTERACTION_RANGE).getValue();
+                double reach = GrabPhysicsManager.getGrabReach(mc.player);
                 HitResult hit = mc.player.pick(reach, 0.0f, false);
 
                 if (hit.getType() == HitResult.Type.BLOCK) {
@@ -210,7 +211,7 @@ public class ClientGrabTracker {
                 }
             }
 
-            double reach = mc.player.getAttribute(Attributes.BLOCK_INTERACTION_RANGE).getValue();
+            double reach = GrabPhysicsManager.getGrabReach(mc.player);
             HitResult hit = mc.player.pick(reach, 0.0f, false);
 
             if (hit.getType() == HitResult.Type.BLOCK) {

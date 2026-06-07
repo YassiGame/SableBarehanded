@@ -12,6 +12,8 @@ repositories {
         name = "mainReleases"
         url = uri("https://maven.ryanhcode.dev/releases")
     }
+    maven { url "https://maven.shedaniel.me/" }
+    maven { url "https://maven.terraformersmc.com/releases/" }
 }
 
 neoForge {
@@ -34,6 +36,7 @@ dependencies {
     compileOnly "maven.modrinth:sable:1.2.2+mc1.21.1"
 
     api("dev.ryanhcode.sable-companion:sable-companion-common-1.21.1:1.4.1")
+    compileOnly("me.shedaniel.cloth:cloth-config-neoforge:15.0.140")
 }
 
 configurations {

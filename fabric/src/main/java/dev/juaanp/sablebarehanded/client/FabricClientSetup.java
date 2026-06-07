@@ -17,7 +17,7 @@ import net.fabricmc.fabric.api.event.player.AttackBlockCallback;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.minecraft.world.InteractionResult;
 
-public class SableBarehandedFabricClient implements ClientModInitializer {
+public class FabricClientSetup implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {

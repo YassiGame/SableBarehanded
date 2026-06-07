@@ -189,13 +189,20 @@ public class GrabPhysicsManager {
         );
     }
 
-    private static void performGrab(Player player, ServerSubLevel serverSubLevel, org.joml.Vector3d localGrabBlock) {        Level level = player.level();
+    private static void performGrab(Player player, ServerSubLevel serverSubLevel, org.joml.Vector3d localGrabBlock) {
+        Level level = player.level();
         ServerSubLevelContainer container = (ServerSubLevelContainer) SubLevelContainer.getContainer(level);
         if (container == null) return;
 
         PhysicsPipeline pipeline = container.physicsSystem().getPipeline();
 
-        Vector3d localCenterOfMass = new Vector3d(serverSubLevel.getMassTracker().getCenterOfMass());
+        org.joml.Vector3dc com = serverSubLevel.getMassTracker().getCenterOfMass();
+        if (com == null || serverSubLevel.getMassTracker().getMass() <= 0.01) {
+            Services.NETWORK.sendStopGrabbingAnimation(player);
+            return;
+        }
+
+        Vector3d localCenterOfMass = new Vector3d(com);
 
         Vector3d globalGrabBlockPos = serverSubLevel.logicalPose().transformPosition(new Vector3d(localGrabBlock));
         float distance = (float) player.getEyePosition().distanceTo(new Vec3(globalGrabBlockPos.x, globalGrabBlockPos.y, globalGrabBlockPos.z));
@@ -216,7 +223,7 @@ public class GrabPhysicsManager {
         Level level = player.level();
         if (level.isClientSide() || ACTIVE_GRABS.containsKey(player.getUUID()) || !player.getMainHandItem().isEmpty()) return;
 
-        double reach = player.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.BLOCK_INTERACTION_RANGE).getValue() + 2.0;
+        double reach = GrabPhysicsManager.getGrabReach(player);
         if (player.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) > (reach * reach)) return;
 
         SubLevelAccess target = Sable.HELPER.getContaining(level, pos);
@@ -232,7 +239,7 @@ public class GrabPhysicsManager {
         Level level = player.level();
         if (level.isClientSide() || ACTIVE_GRABS.containsKey(player.getUUID()) || !player.getMainHandItem().isEmpty()) return;
 
-        double reach = player.getAttribute(Attributes.BLOCK_INTERACTION_RANGE).getValue() + 2.0;
+        double reach = GrabPhysicsManager.getGrabReach(player);
         if (player.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) > (reach * reach)) return;
 
         double maxDist = CommonConfig.COMMON.barehandedAssemblyMaxDistance + 1.0;
@@ -243,6 +250,8 @@ public class GrabPhysicsManager {
 
         List<BlockPos> blocks = AssemblyBehaviorHelper.getConnectedBlocks(level, pos);
 
+        if (!SableBarehandedEvents.fireBeforeAssemble(player, pos, blocks)) return;
+
         for (BlockPos bPos : blocks) {
             if (Sable.HELPER.getContaining(level, bPos) != null) return;
         }
@@ -251,6 +260,8 @@ public class GrabPhysicsManager {
         SubLevel subLevel = SubLevelAssemblyHelper.assembleBlocks((ServerLevel) level, pos, blocks, bounds);
 
         if (subLevel instanceof ServerSubLevel serverSubLevel) {
+
+            SableBarehandedEvents.fireOnAssemble(player, serverSubLevel, blocks);
 
             boolean isFastLift = AssemblyBehaviorHelper.isFastLift(level, pos, mainState);
 
@@ -578,4 +589,14 @@ public class GrabPhysicsManager {
 
     public static void onPlayerLoggedOut(Player player) { stopGrabbing(player.getUUID()); }
     public static void onPlayerDeath(Player player)     { stopGrabbing(player.getUUID()); }
+
+
+    public static final double CREATIVE_REACH = 128.0;
+    public static double getGrabReach(Player player) {
+        double normalReach = player.getAttribute(Attributes.BLOCK_INTERACTION_RANGE).getValue() + CommonConfig.COMMON.grabReachBonus;
+        if (player.isCreative() && CommonConfig.COMMON.creativeSuperStrength) {
+            return Math.max(CREATIVE_REACH, normalReach);
+        }
+        return normalReach;
+    }
 }

@@ -19,7 +19,7 @@
             "dev.juaanp.sablebarehanded.SableBarehandedFabric"
         ],
         "client": [
-            "dev.juaanp.sablebarehanded.client.SableBarehandedFabricClient"
+            "dev.juaanp.sablebarehanded.client.FabricClientSetup"
         ],
         "modmenu": [
             "dev.juaanp.sablebarehanded.client.ModMenuIntegration"

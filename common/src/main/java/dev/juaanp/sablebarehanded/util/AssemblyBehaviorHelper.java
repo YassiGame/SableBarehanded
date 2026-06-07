@@ -1,7 +1,6 @@
 package dev.juaanp.sablebarehanded.util;
 
 import dev.juaanp.sablebarehanded.config.CommonConfig;
-import dev.juaanp.sablebarehanded.platform.Services;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.player.Player;
@@ -25,12 +24,8 @@ public class AssemblyBehaviorHelper {
     public static boolean isIgnored(Level level, BlockPos pos, BlockState state) {
         if (state.isAir() || state.getDestroySpeed(level, pos) < 0.0F) return true;
         if (!state.getFluidState().isEmpty() && !state.isSolidRender(level, pos)) return true;
+        if (state.getCollisionShape(level, pos).isEmpty()) return true;
         return false;
-    }
-
-    public static boolean isLiftableDecor(Level level, BlockPos pos, BlockState state) {
-        if (state.isAir() || state.getDestroySpeed(level, pos) < 0.0F || !state.getFluidState().isEmpty()) return false;
-        return state.getCollisionShape(level, pos).isEmpty();
     }
 
     public static boolean isFastLift(Level level, BlockPos pos, BlockState state) {
@@ -74,17 +69,15 @@ public class AssemblyBehaviorHelper {
                 LevelReader.class.getClassLoader(),
                 new Class<?>[] { LevelReader.class },
                 (proxy, method, args) -> {
-                    if (args != null && args.length > 0 && args[0] instanceof BlockPos) {
+                    if (args != null && args.length == 1 && args[0] instanceof BlockPos) {
                         BlockPos p = (BlockPos) args[0];
                         if (assembly.contains(p)) {
-                            String name = method.getName();
-                            if (name.equals("getBlockState")) {
+                            Class<?> returnType = method.getReturnType();
+                            if (returnType == BlockState.class) {
                                 return Blocks.AIR.defaultBlockState();
-                            }
-                            if (name.equals("getFluidState")) {
+                            } else if (returnType == net.minecraft.world.level.material.FluidState.class) {
                                 return Fluids.EMPTY.defaultFluidState();
-                            }
-                            if (name.equals("getBlockEntity")) {
+                            } else if (returnType == net.minecraft.world.level.block.entity.BlockEntity.class) {
                                 return null;
                             }
                         }
@@ -106,7 +99,7 @@ public class AssemblyBehaviorHelper {
 
                 BlockState adjState = level.getBlockState(adj);
 
-                if (adjState.isAir() || !isLiftableDecor(level, adj, adjState)) continue;
+                if (adjState.isAir() || adjState.getDestroySpeed(level, adj) < 0.0F || !adjState.getFluidState().isEmpty()) continue;
 
                 if (!adjState.canSurvive(simulatedLevel, adj)) {
                     assembly.add(adj);
