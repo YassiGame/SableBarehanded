@@ -48,5 +48,6 @@ public class SableBarehandedNeoForge {
         registrar.playToClient(SyncGhostStatePacket.TYPE, SyncGhostStatePacket.CODEC, NeoForgePacketHandlers::handleGhostStateSync);
 
         registrar.playToClient(SyncConfigPacket.TYPE, SyncConfigPacket.CODEC, NeoForgePacketHandlers::handleConfigSync);
+        registrar.playToClient(SyncGrabStatePacket.TYPE, SyncGrabStatePacket.CODEC, NeoForgePacketHandlers::handleSyncGrabState);
     }
 }

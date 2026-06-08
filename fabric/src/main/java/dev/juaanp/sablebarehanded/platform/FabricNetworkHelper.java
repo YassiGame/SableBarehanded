@@ -63,4 +63,11 @@ public class FabricNetworkHelper implements INetworkHelper {
             ServerPlayNetworking.send(player, packet);
         }
     }
+
+    @Override
+    public void sendSyncGrabState(Player player, double mass, UUID subLevelId, org.joml.Vector3d localPivot, double distance) {
+        if (player instanceof ServerPlayer serverPlayer) {
+            ServerPlayNetworking.send(serverPlayer, new SyncGrabStatePacket(player.getId(), mass, subLevelId, localPivot, distance));
+        }
+    }
 }

@@ -70,4 +70,12 @@ public class NeoForgePacketHandlers {
             }
         });
     }
+
+    public static void handleSyncGrabState(SyncGrabStatePacket packet, IPayloadContext context) {
+        context.enqueueWork(() -> {
+            if (context.flow().isClientbound()) {
+                ClientPayloadHandler.handleSyncGrabState(packet);
+            }
+        });
+    }
 }

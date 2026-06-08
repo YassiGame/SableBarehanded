@@ -13,7 +13,6 @@ public class BarehandedConfigScreen {
         ConfigBuilder builder = ConfigBuilder.create()
                 .setParentScreen(parent)
                 .setTitle(Component.literal("Sable Barehanded"));
-
         builder.setSavingRunnable(CommonConfig::save);
 
         ConfigCategory physics = builder.getOrCreateCategory(Component.literal("Server Settings"));
@@ -53,16 +52,26 @@ public class BarehandedConfigScreen {
         addDouble(assembly, eb, Component.literal("Movement Damping"), CommonConfig.Specs.ASSEMBLY_MOVEMENT_DAMPING, CommonConfig.COMMON.assemblyMovementDamping, v -> CommonConfig.COMMON.assemblyMovementDamping = v);
         physics.addEntry(assembly.build());
 
-        SubCategoryBuilder colls = eb.startSubCategory(Component.literal("Collision Filters"));
-        addBoolean(colls, eb, Component.literal("[Grab] Ignore Self"), CommonConfig.Specs.IGNORE_COLLISIONS_GRAB_SELF, CommonConfig.COMMON.ignoreCollisionsGrabSelf, v -> CommonConfig.COMMON.ignoreCollisionsGrabSelf = v);
-        addBoolean(colls, eb, Component.literal("[Grab] Ignore Other Players"), CommonConfig.Specs.IGNORE_COLLISIONS_GRAB_OTHER_PLAYERS, CommonConfig.COMMON.ignoreCollisionsGrabOtherPlayers, v -> CommonConfig.COMMON.ignoreCollisionsGrabOtherPlayers = v);
-        addBoolean(colls, eb, Component.literal("[Grab] Ignore Entities"), CommonConfig.Specs.IGNORE_COLLISIONS_GRAB_ENTITIES, CommonConfig.COMMON.ignoreCollisionsGrabEntities, v -> CommonConfig.COMMON.ignoreCollisionsGrabEntities = v);
-        addBoolean(colls, eb, Component.literal("[Grab] Ignore Everything"), CommonConfig.Specs.IGNORE_COLLISIONS_GRAB_EVERYTHING, CommonConfig.COMMON.ignoreCollisionsGrabEverything, v -> CommonConfig.COMMON.ignoreCollisionsGrabEverything = v);
-        addBoolean(colls, eb, Component.literal("[Rotate] Ignore Self"), CommonConfig.Specs.IGNORE_COLLISIONS_ROTATION_SELF, CommonConfig.COMMON.ignoreCollisionsRotationSelf, v -> CommonConfig.COMMON.ignoreCollisionsRotationSelf = v);
-        addBoolean(colls, eb, Component.literal("[Rotate] Ignore Other Players"), CommonConfig.Specs.IGNORE_COLLISIONS_ROTATION_OTHER_PLAYERS, CommonConfig.COMMON.ignoreCollisionsRotationOtherPlayers, v -> CommonConfig.COMMON.ignoreCollisionsRotationOtherPlayers = v);
-        addBoolean(colls, eb, Component.literal("[Rotate] Ignore Entities"), CommonConfig.Specs.IGNORE_COLLISIONS_ROTATION_ENTITIES, CommonConfig.COMMON.ignoreCollisionsRotationEntities, v -> CommonConfig.COMMON.ignoreCollisionsRotationEntities = v);
-        addBoolean(colls, eb, Component.literal("[Rotate] Ignore Everything"), CommonConfig.Specs.IGNORE_COLLISIONS_ROTATION_EVERYTHING, CommonConfig.COMMON.ignoreCollisionsRotationEverything, v -> CommonConfig.COMMON.ignoreCollisionsRotationEverything = v);
-        physics.addEntry(colls.build());
+        SubCategoryBuilder encumbrance = eb.startSubCategory(Component.literal("Encumbrance & Tethering"));
+        addBoolean(encumbrance, eb, Component.literal("Enable Encumbrance"), CommonConfig.Specs.ENABLE_ENCUMBRANCE, CommonConfig.COMMON.enableEncumbrance, v -> CommonConfig.COMMON.enableEncumbrance = v);
+        addDouble(encumbrance, eb, Component.literal("Physics Gravity (m/s^2)"), CommonConfig.Specs.PHYSICS_GRAVITY, CommonConfig.COMMON.physicsGravity, v -> CommonConfig.COMMON.physicsGravity = v);
+        addDouble(encumbrance, eb, Component.literal("Max Movement Penalty"), CommonConfig.Specs.MAX_MOVEMENT_PENALTY, CommonConfig.COMMON.maxMovementPenalty, v -> CommonConfig.COMMON.maxMovementPenalty = v);
+        addDouble(encumbrance, eb, Component.literal("Jump Prevention Threshold"), CommonConfig.Specs.JUMP_PREVENTION_THRESHOLD, CommonConfig.COMMON.jumpPreventionThreshold, v -> CommonConfig.COMMON.jumpPreventionThreshold = v);
+        addDouble(encumbrance, eb, Component.literal("Max Camera Penalty"), CommonConfig.Specs.MAX_CAMERA_PENALTY, CommonConfig.COMMON.maxCameraPenalty, v -> CommonConfig.COMMON.maxCameraPenalty = v);
+        addBoolean(encumbrance, eb, Component.literal("Enable Physical Tether"), CommonConfig.Specs.ENABLE_PHYSICAL_TETHER, CommonConfig.COMMON.enablePhysicalTether, v -> CommonConfig.COMMON.enablePhysicalTether = v);
+        addDouble(encumbrance, eb, Component.literal("Arm Stretch Tolerance (m)"), CommonConfig.Specs.ARM_STRETCH_TOLERANCE, CommonConfig.COMMON.armStretchTolerance, v -> CommonConfig.COMMON.armStretchTolerance = v);
+        addDouble(encumbrance, eb, Component.literal("Tether Stiffness Base"), CommonConfig.Specs.TETHER_STIFFNESS_BASE, CommonConfig.COMMON.tetherStiffnessBase, v -> CommonConfig.COMMON.tetherStiffnessBase = v);
+        addDouble(encumbrance, eb, Component.literal("Tether Stiffness Multiplier"), CommonConfig.Specs.TETHER_STIFFNESS_MULTIPLIER, CommonConfig.COMMON.tetherStiffnessMultiplier, v -> CommonConfig.COMMON.tetherStiffnessMultiplier = v);
+        physics.addEntry(encumbrance.build());
+
+        SubCategoryBuilder exhaustion = eb.startSubCategory(Component.literal("Hunger & Exhaustion"));
+        addBoolean(exhaustion, eb, Component.literal("Enable Exhaustion"), CommonConfig.Specs.ENABLE_EXHAUSTION, CommonConfig.COMMON.enableExhaustion, v -> CommonConfig.COMMON.enableExhaustion = v);
+        addDouble(exhaustion, eb, Component.literal("Idle Drain Rate"), CommonConfig.Specs.EXHAUSTION_IDLE_RATE, CommonConfig.COMMON.exhaustionIdleRate, v -> CommonConfig.COMMON.exhaustionIdleRate = v);
+        addDouble(exhaustion, eb, Component.literal("Movement Drain Rate"), CommonConfig.Specs.EXHAUSTION_MOVEMENT_RATE, CommonConfig.COMMON.exhaustionMovementRate, v -> CommonConfig.COMMON.exhaustionMovementRate = v);
+        addDouble(exhaustion, eb, Component.literal("Tension Drain Rate (Pulling)"), CommonConfig.Specs.EXHAUSTION_TENSION_RATE, CommonConfig.COMMON.exhaustionTensionRate, v -> CommonConfig.COMMON.exhaustionTensionRate = v);
+        addDouble(exhaustion, eb, Component.literal("Force Drain Rate (Kinetic)"), CommonConfig.Specs.EXHAUSTION_FORCE_RATE, CommonConfig.COMMON.exhaustionForceRate, v -> CommonConfig.COMMON.exhaustionForceRate = v);
+        addDouble(exhaustion, eb, Component.literal("Passive Force Threshold"), CommonConfig.Specs.EXHAUSTION_PASSIVE_THRESHOLD, CommonConfig.COMMON.exhaustionPassiveThreshold, v -> CommonConfig.COMMON.exhaustionPassiveThreshold = v);
+        physics.addEntry(exhaustion.build());
 
         SubCategoryBuilder suspension = eb.startSubCategory(Component.literal("Physics Suspension"));
         addInt(suspension, eb, Component.literal("Standing-on-Grab Suspend Ticks"), CommonConfig.Specs.STANDING_ON_GRAB_SUSPEND_TICKS, CommonConfig.COMMON.standingOnGrabSuspendTicks, v -> CommonConfig.COMMON.standingOnGrabSuspendTicks = v);
@@ -80,11 +89,16 @@ public class BarehandedConfigScreen {
         addDouble(velocity, eb, Component.literal("Max Velocity XZ (m/t)"), CommonConfig.Specs.MAX_PLAYER_VELOCITY_XZ, CommonConfig.COMMON.maxPlayerVelocityXZ, v -> CommonConfig.COMMON.maxPlayerVelocityXZ = v);
         physics.addEntry(velocity.build());
 
-        SubCategoryBuilder lead = eb.startSubCategory(Component.literal("Player Lead (Predictive Offset)"));
-        addDouble(lead, eb, Component.literal("Speed Threshold (m/t)"), CommonConfig.Specs.PLAYER_SPEED_LEAD_THRESHOLD, CommonConfig.COMMON.playerSpeedLeadThreshold, v -> CommonConfig.COMMON.playerSpeedLeadThreshold = v);
-        addDouble(lead, eb, Component.literal("Lead Multiplier"), CommonConfig.Specs.PLAYER_SPEED_LEAD_MULTIPLIER, CommonConfig.COMMON.playerSpeedLeadMultiplier, v -> CommonConfig.COMMON.playerSpeedLeadMultiplier = v);
-        addDouble(lead, eb, Component.literal("Y Down Lead Cap"), CommonConfig.Specs.PLAYER_SPEED_LEAD_Y_DOWN_CAP, CommonConfig.COMMON.playerSpeedLeadYDownCap, v -> CommonConfig.COMMON.playerSpeedLeadYDownCap = v);
-        physics.addEntry(lead.build());
+        SubCategoryBuilder colls = eb.startSubCategory(Component.literal("Collision Filters"));
+        addBoolean(colls, eb, Component.literal("[Grab] Ignore Self"), CommonConfig.Specs.IGNORE_COLLISIONS_GRAB_SELF, CommonConfig.COMMON.ignoreCollisionsGrabSelf, v -> CommonConfig.COMMON.ignoreCollisionsGrabSelf = v);
+        addBoolean(colls, eb, Component.literal("[Grab] Ignore Other Players"), CommonConfig.Specs.IGNORE_COLLISIONS_GRAB_OTHER_PLAYERS, CommonConfig.COMMON.ignoreCollisionsGrabOtherPlayers, v -> CommonConfig.COMMON.ignoreCollisionsGrabOtherPlayers = v);
+        addBoolean(colls, eb, Component.literal("[Grab] Ignore Entities"), CommonConfig.Specs.IGNORE_COLLISIONS_GRAB_ENTITIES, CommonConfig.COMMON.ignoreCollisionsGrabEntities, v -> CommonConfig.COMMON.ignoreCollisionsGrabEntities = v);
+        addBoolean(colls, eb, Component.literal("[Grab] Ignore Everything"), CommonConfig.Specs.IGNORE_COLLISIONS_GRAB_EVERYTHING, CommonConfig.COMMON.ignoreCollisionsGrabEverything, v -> CommonConfig.COMMON.ignoreCollisionsGrabEverything = v);
+        addBoolean(colls, eb, Component.literal("[Rotate] Ignore Self"), CommonConfig.Specs.IGNORE_COLLISIONS_ROTATION_SELF, CommonConfig.COMMON.ignoreCollisionsRotationSelf, v -> CommonConfig.COMMON.ignoreCollisionsRotationSelf = v);
+        addBoolean(colls, eb, Component.literal("[Rotate] Ignore Other Players"), CommonConfig.Specs.IGNORE_COLLISIONS_ROTATION_OTHER_PLAYERS, CommonConfig.COMMON.ignoreCollisionsRotationOtherPlayers, v -> CommonConfig.COMMON.ignoreCollisionsRotationOtherPlayers = v);
+        addBoolean(colls, eb, Component.literal("[Rotate] Ignore Entities"), CommonConfig.Specs.IGNORE_COLLISIONS_ROTATION_ENTITIES, CommonConfig.COMMON.ignoreCollisionsRotationEntities, v -> CommonConfig.COMMON.ignoreCollisionsRotationEntities = v);
+        addBoolean(colls, eb, Component.literal("[Rotate] Ignore Everything"), CommonConfig.Specs.IGNORE_COLLISIONS_ROTATION_EVERYTHING, CommonConfig.COMMON.ignoreCollisionsRotationEverything, v -> CommonConfig.COMMON.ignoreCollisionsRotationEverything = v);
+        physics.addEntry(colls.build());
 
         SubCategoryBuilder advanced = eb.startSubCategory(Component.literal("Advanced Physics Tuning"));
         addDouble(advanced, eb, Component.literal("Stiffness"), CommonConfig.Specs.STIFFNESS, CommonConfig.COMMON.stiffness, v -> CommonConfig.COMMON.stiffness = v);
@@ -102,6 +116,14 @@ public class BarehandedConfigScreen {
         addDouble(advanced, eb, Component.literal("Sway Angular Stiffness: Range"), CommonConfig.Specs.SWAY_ANGULAR_STIFFNESS_RANGE, CommonConfig.COMMON.swayAngularStiffnessRange, v -> CommonConfig.COMMON.swayAngularStiffnessRange = v);
         physics.addEntry(advanced.build());
 
+        SubCategoryBuilder movementPenalty = eb.startSubCategory(Component.literal("Movement Speed Penalty"));
+        addDouble(movementPenalty, eb, Component.literal("Base Movement Penalty"), CommonConfig.Specs.BASE_MOVEMENT_PENALTY, CommonConfig.COMMON.baseMovementPenalty, v -> CommonConfig.COMMON.baseMovementPenalty = v);
+        addDouble(movementPenalty, eb, Component.literal("Weight Penalty Multiplier"), CommonConfig.Specs.WEIGHT_PENALTY_MULTIPLIER, CommonConfig.COMMON.weightPenaltyMultiplier, v -> CommonConfig.COMMON.weightPenaltyMultiplier = v);
+        addDouble(movementPenalty, eb, Component.literal("Tension Penalty Multiplier"), CommonConfig.Specs.TENSION_PENALTY_MULTIPLIER, CommonConfig.COMMON.tensionPenaltyMultiplier, v -> CommonConfig.COMMON.tensionPenaltyMultiplier = v);
+        addDouble(movementPenalty, eb, Component.literal("Kinetic Penalty Multiplier"), CommonConfig.Specs.KINETIC_PENALTY_MULTIPLIER, CommonConfig.COMMON.kineticPenaltyMultiplier, v -> CommonConfig.COMMON.kineticPenaltyMultiplier = v);
+        addDouble(movementPenalty, eb, Component.literal("Min Speed While Grabbing"), CommonConfig.Specs.MIN_SPEED_WHILE_GRABBING, CommonConfig.COMMON.minSpeedWhileGrabbing, v -> CommonConfig.COMMON.minSpeedWhileGrabbing = v);
+        physics.addEntry(movementPenalty.build());
+
         // Client Settings Subcategories
         SubCategoryBuilder rotInput = eb.startSubCategory(Component.literal("Rotation Input"));
         addDouble(rotInput, eb, Component.literal("Vertical Sensitivity"), CommonConfig.Specs.VERTICAL_ROTATION_SENSITIVITY, CommonConfig.CLIENT.verticalRotationSensitivity, v -> CommonConfig.CLIENT.verticalRotationSensitivity = v);
@@ -111,6 +133,10 @@ public class BarehandedConfigScreen {
         addBoolean(rotInput, eb, Component.literal("Rotate Around Center"), CommonConfig.Specs.ROTATE_AROUND_CENTER, CommonConfig.CLIENT.rotateAroundCenter, v -> CommonConfig.CLIENT.rotateAroundCenter = v);
         addBoolean(rotInput, eb, Component.literal("Prevent Movement While Rotating"), CommonConfig.Specs.PREVENT_MOVEMENT_WHILE_ROTATING, CommonConfig.CLIENT.preventMovementWhileRotating, v -> CommonConfig.CLIENT.preventMovementWhileRotating = v);
         client.addEntry(rotInput.build());
+
+        SubCategoryBuilder inputMisc = eb.startSubCategory(Component.literal("Input & Interaction"));
+        addInt(inputMisc, eb, Component.literal("Regrab Debounce Ticks"), CommonConfig.Specs.REGRAB_DEBOUNCE_TICKS, CommonConfig.CLIENT.regrabDebounceTicks, v -> CommonConfig.CLIENT.regrabDebounceTicks = v);
+        client.addEntry(inputMisc.build());
 
         SubCategoryBuilder armRendering = eb.startSubCategory(Component.literal("Arm & HUD Rendering"));
         addDouble(armRendering, eb, Component.literal("Arm Transition Speed"), CommonConfig.Specs.ARM_TRANSITION_SPEED, CommonConfig.CLIENT.armTransitionSpeed, v -> CommonConfig.CLIENT.armTransitionSpeed = v);

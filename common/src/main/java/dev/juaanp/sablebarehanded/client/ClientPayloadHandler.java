@@ -2,6 +2,8 @@ package dev.juaanp.sablebarehanded.client;
 
 import dev.juaanp.sablebarehanded.network.StartGrabbingAnimationPacket;
 import dev.juaanp.sablebarehanded.network.StopGrabbingAnimationPacket;
+import dev.juaanp.sablebarehanded.network.SyncGrabStatePacket;
+import dev.juaanp.sablebarehanded.platform.Services;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -11,13 +13,34 @@ import java.util.Set;
 import java.util.UUID;
 
 public class ClientPayloadHandler {
-
     public static final Set<UUID> GRABBING_PLAYERS = new HashSet<>();
 
     public static void handleStartGrabbingAnimation(StartGrabbingAnimationPacket packet) {
         Player player = getPlayerFromId(packet.entityId());
         if (player != null) {
             GRABBING_PLAYERS.add(player.getUUID());
+            if (player == Minecraft.getInstance().player) {
+                ClientGrabTracker.isHoldingGrab = true;
+            }
+        }
+    }
+
+    public static void handleSyncGrabState(SyncGrabStatePacket packet) {
+        Player player = getPlayerFromId(packet.entityId());
+        if (player == Minecraft.getInstance().player) {
+            if (ClientGrabTracker.pendingStopGrab) {
+                ClientGrabTracker.isHoldingGrab = false;
+                ClientGrabTracker.resetGrabState();
+                Services.NETWORK.sendStopGrabbingRequest();
+                return;
+            }
+
+            ClientGrabTracker.isHoldingGrab = true;
+            ClientGrabTracker.isWaitingForGrabSync = false;
+            ClientGrabTracker.grabbedMass = packet.mass();
+            ClientGrabTracker.grabbedSubLevelId = packet.subLevelId();
+            ClientGrabTracker.localGrabPivot = packet.localPivot();
+            ClientGrabTracker.grabRestDistance = packet.distance();
         }
     }
 
@@ -28,6 +51,7 @@ public class ClientPayloadHandler {
 
             if (player == Minecraft.getInstance().player) {
                 ClientGrabTracker.isHoldingGrab = false;
+                ClientGrabTracker.resetGrabState();
             }
         }
     }

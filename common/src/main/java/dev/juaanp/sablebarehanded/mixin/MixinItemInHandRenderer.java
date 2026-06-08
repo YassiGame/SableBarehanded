@@ -66,19 +66,23 @@ public class MixinItemInHandRenderer {
 
         int charge = ClientGrabTracker.assemblyChargeTicks;
 
-        if (charge > 0 && ClientGrabTracker.isPulling && stack.isEmpty()) {
+        if (charge > 0 && ClientGrabTracker.smoothPullIntensity > 0.01F && stack.isEmpty()) {
             float maxTicks = Math.max(1.0F, (float) ClientGrabTracker.currentRequiredAssemblyTicks);
             float progress = Math.min((float) charge / maxTicks, 1.0F);
 
             float visualThreshold = (float) CommonConfig.CLIENT.visualShakeThreshold;
             if (progress >= visualThreshold) {
-                float shakeIntensity = progress * (float) CommonConfig.CLIENT.assemblyShakeMultiplier;
-                float time = player.tickCount + partialTicks;
-                poseStack.translate(
-                        Mth.sin(time * (float) CommonConfig.CLIENT.shakeFrequencyX) * shakeIntensity,
-                        Mth.cos(time * (float) CommonConfig.CLIENT.shakeFrequencyY) * shakeIntensity,
-                        Mth.sin(time * (float) CommonConfig.CLIENT.shakeFrequencyZ) * shakeIntensity
-                );
+                float pullFactor = ClientGrabTracker.smoothPullIntensity;
+                float shakeIntensity = progress * pullFactor * (float) CommonConfig.CLIENT.assemblyShakeMultiplier;
+
+                if (shakeIntensity > 0.001F) {
+                    float time = player.tickCount + partialTicks;
+                    poseStack.translate(
+                            Mth.sin(time * (float) CommonConfig.CLIENT.shakeFrequencyX) * shakeIntensity,
+                            Mth.cos(time * (float) CommonConfig.CLIENT.shakeFrequencyY) * shakeIntensity,
+                            Mth.sin(time * (float) CommonConfig.CLIENT.shakeFrequencyZ) * shakeIntensity
+                    );
+                }
             }
         }
 

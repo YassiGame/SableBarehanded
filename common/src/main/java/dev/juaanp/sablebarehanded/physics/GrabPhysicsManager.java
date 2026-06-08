@@ -1,5 +1,6 @@
 package dev.juaanp.sablebarehanded.physics;
 
+import dev.juaanp.sablebarehanded.Constants;
 import dev.juaanp.sablebarehanded.api.SableBarehandedEvents;
 import dev.juaanp.sablebarehanded.config.CommonConfig;
 import dev.juaanp.sablebarehanded.platform.Services;
@@ -18,17 +19,22 @@ import dev.ryanhcode.sable.companion.math.JOMLConversion;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.joml.AxisAngle4d;
 import org.joml.Quaterniond;
 import org.joml.Vector3d;
@@ -39,6 +45,8 @@ import java.util.Map;
 import java.util.UUID;
 
 public class GrabPhysicsManager {
+
+    private static final ResourceLocation MOVEMENT_PENALTY_ID = ResourceLocation.fromNamespaceAndPath(Constants.MOD_ID, "grab_movement_penalty");
 
     private static class GrabSession {
         public final ServerSubLevel subLevel;
@@ -172,6 +180,11 @@ public class GrabPhysicsManager {
             if (level != null) {
                 Player player = level.getPlayerByUUID(playerId);
                 if (player != null) {
+                    AttributeInstance moveSpeed = player.getAttribute(Attributes.MOVEMENT_SPEED);
+                    if (moveSpeed != null) {
+                        moveSpeed.removeModifier(MOVEMENT_PENALTY_ID);
+                    }
+
                     Services.NETWORK.sendStopGrabbingAnimation(player);
                     SableBarehandedEvents.fireOnRelease(player, session.subLevel);
                 }
@@ -216,6 +229,12 @@ public class GrabPhysicsManager {
 
         rebuildConstraint(session);
         Services.NETWORK.sendStartGrabbingAnimation(player);
+        Services.NETWORK.sendSyncGrabState(player,
+                com != null ? serverSubLevel.getMassTracker().getMass() : 0.0,
+                serverSubLevel.getUniqueId(),
+                localGrabBlock,
+                distance
+        );
         ACTIVE_GRABS.put(player.getUUID(), session);
     }
 
@@ -270,7 +289,7 @@ public class GrabPhysicsManager {
                 level.playSound(null, pos, soundType.getBreakSound(), SoundSource.BLOCKS, 1.0f, 1.0f);
                 level.levelEvent(2001, pos, net.minecraft.world.level.block.Block.getId(mainState));
             } else {
-                level.playSound(null, pos, net.minecraft.sounds.SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS, 0.2f, 0.5f);
+                level.playSound(null, pos, SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS, 0.2f, 0.5f);
             }
 
             for (BlockPos bPos : blocks) {
@@ -556,7 +575,7 @@ public class GrabPhysicsManager {
 
             boolean disableMotors  = suspendPhysics;
 
-            double linearMaxForce  = disableMotors ? 0.0 : (isCreativeSuper ? 1e12 : (actualMaxForce * speedMultiplier));
+            double linearMaxForce  = disableMotors ? 0.0 : (isCreativeSuper ? 1e12 : actualMaxForce);
 
             Vector3d globalOffset = new Vector3d(targetAnchor).sub(grab.anchorGlobalOrigin);
             Vector3d localOffset  = new Vector3d(globalOffset).rotate(new Quaterniond(grab.baseOrientation).invert());
@@ -584,14 +603,109 @@ public class GrabPhysicsManager {
                     grab.constraintHandle.setMotor(axis, 0.0, swayStiffness, angularDamping, true, angularMaxForce);
                 }
             }
+
+            if (!isCreativeSuper && !player.isSpectator()) {
+                double objectWeight = mass * CommonConfig.COMMON.physicsGravity;
+                double weightRatio = Mth.clamp(objectWeight / actualMaxForce, 0.0, 1.0);
+
+                double basePenalty = CommonConfig.COMMON.baseMovementPenalty;
+
+                double weightPenalty = weightRatio * CommonConfig.COMMON.weightPenaltyMultiplier;
+
+                double tensionPenalty = 0.0;
+                if (tension > grab.distance + 0.5) {
+                    double tensionRatio = Mth.clamp((tension - grab.distance) / 5.0, 0.0, 1.0);
+                    tensionPenalty = tensionRatio * CommonConfig.COMMON.tensionPenaltyMultiplier;
+                }
+
+                Vector3d blockVel = new Vector3d(grab.subLevel.latestLinearVelocity);
+                double blockSpeed = blockVel.length();
+                double kineticRatio = Mth.clamp(blockSpeed / 1.0, 0.0, 1.0);
+                double kineticPenalty = kineticRatio * CommonConfig.COMMON.kineticPenaltyMultiplier;
+
+                double totalPenalty = basePenalty + weightPenalty + tensionPenalty + kineticPenalty;
+                totalPenalty = Mth.clamp(totalPenalty, 0.0, 1.0 - CommonConfig.COMMON.minSpeedWhileGrabbing);
+
+                AttributeInstance moveSpeed = player.getAttribute(Attributes.MOVEMENT_SPEED);
+                if (moveSpeed != null) {
+                    moveSpeed.removeModifier(MOVEMENT_PENALTY_ID);
+
+                    if (totalPenalty > 0.01) {
+                        AttributeModifier penaltyModifier = new AttributeModifier(
+                                MOVEMENT_PENALTY_ID,
+                                -totalPenalty,
+                                AttributeModifier.Operation.ADD_MULTIPLIED_BASE
+                        );
+                        moveSpeed.addTransientModifier(penaltyModifier);
+                    }
+                }
+            } else {
+                AttributeInstance moveSpeed = player.getAttribute(Attributes.MOVEMENT_SPEED);
+                if (moveSpeed != null) {
+                    moveSpeed.removeModifier(MOVEMENT_PENALTY_ID);
+                }
+            }
+
+            if (CommonConfig.COMMON.enableExhaustion && !player.isCreative() && !player.isSpectator() && player.level().getDifficulty() != net.minecraft.world.Difficulty.PEACEFUL) {
+
+                Vector3d springStretch = new Vector3d(targetAnchor).sub(currentActualGrabBlockPos);
+                double stretchLength = springStretch.length();
+
+                double theoreticalSpringForce = stretchLength * currentLinearStiffness;
+
+                mass = grab.subLevel.getMassTracker().getMass();
+                double objectWeight = mass * CommonConfig.COMMON.physicsGravity;
+
+                double weightRatio = Mth.clamp(objectWeight / actualMaxForce, 0.0, 1.0);
+
+                double dynamicStruggle = Mth.clamp(theoreticalSpringForce / actualMaxForce, 0.0, 1.0);
+
+                double carryFactor = suspendPhysics ? 0.1 : 1.0;
+
+                double baseEffort = weightRatio * carryFactor;
+                double dynamicEffort = dynamicStruggle * Math.max(0.2, weightRatio);
+                double exertionRatio = Mth.clamp(Math.max(baseEffort, dynamicEffort), 0.0, 1.0);
+
+                if (player.tickCount % 10 == 0) {
+                    dev.juaanp.sablebarehanded.Constants.LOG.info(
+                            "[Sable Barehanded Debug] Ratio: {} | WeightRatio: {} | Stretch: {}m | TheoForce: {}N",
+                            String.format("%.3f", exertionRatio),
+                            String.format("%.3f", weightRatio),
+                            String.format("%.3f", stretchLength),
+                            String.format("%.2f", theoreticalSpringForce)
+                    );
+                }
+
+                if (exertionRatio > 0.01) {
+                    double dX = player.getX() - player.xo;
+                    double dY = player.getY() - player.yo;
+                    double dZ = player.getZ() - player.zo;
+                    double trueServerSpeed = Math.sqrt(dX * dX + dY * dY + dZ * dZ);
+
+                    double idleEffort = CommonConfig.COMMON.exhaustionIdleRate * exertionRatio;
+                    double moveEffort = CommonConfig.COMMON.exhaustionMovementRate * exertionRatio * (trueServerSpeed * 20.0);
+
+                    double tensionEffort = 0.0;
+                    if (tension > grab.distance + 1.5) {
+                        double activePull = Math.min(tension - (grab.distance + 1.5), 5.0);
+                        tensionEffort = CommonConfig.COMMON.exhaustionTensionRate * exertionRatio * activePull;
+                    }
+
+                    float totalExhaustion = (float) (idleEffort + moveEffort + tensionEffort);
+
+                    if (totalExhaustion > 0.0f) {
+                        player.causeFoodExhaustion(totalExhaustion);
+                    }
+                }
+            }
         }
     }
 
     public static void onPlayerLoggedOut(Player player) { stopGrabbing(player.getUUID()); }
-    public static void onPlayerDeath(Player player)     { stopGrabbing(player.getUUID()); }
-
+    public static void onPlayerDeath(Player player) { stopGrabbing(player.getUUID()); }
 
     public static final double CREATIVE_REACH = 128.0;
+
     public static double getGrabReach(Player player) {
         double normalReach = player.getAttribute(Attributes.BLOCK_INTERACTION_RANGE).getValue() + CommonConfig.COMMON.grabReachBonus;
         if (player.isCreative() && CommonConfig.COMMON.creativeSuperStrength) {

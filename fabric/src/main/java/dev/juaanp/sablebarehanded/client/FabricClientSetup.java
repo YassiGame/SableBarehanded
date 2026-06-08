@@ -1,10 +1,7 @@
 package dev.juaanp.sablebarehanded.client;
 
 import dev.juaanp.sablebarehanded.config.CommonConfig;
-import dev.juaanp.sablebarehanded.network.StartGrabbingAnimationPacket;
-import dev.juaanp.sablebarehanded.network.StopGrabbingAnimationPacket;
-import dev.juaanp.sablebarehanded.network.SyncConfigPacket;
-import dev.juaanp.sablebarehanded.network.SyncGhostStatePacket;
+import dev.juaanp.sablebarehanded.network.*;
 import dev.juaanp.sablebarehanded.physics.GrabPhysicsManager;
 import dev.juaanp.sablebarehanded.platform.Services;
 import net.fabricmc.api.ClientModInitializer;
@@ -83,5 +80,12 @@ public class FabricClientSetup implements ClientModInitializer {
             }
             return InteractionResult.PASS;
         });
+
+        net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.registerGlobalReceiver(
+                SyncGrabStatePacket.TYPE,
+                (payload, context) -> context.client().execute(() ->
+                        dev.juaanp.sablebarehanded.client.ClientPayloadHandler.handleSyncGrabState(payload)
+                )
+        );
     }
 }

@@ -44,4 +44,11 @@ public class NeoForgeNetworkHelper implements INetworkHelper {
     public void sendGhostStateSync(ServerSubLevel subLevel, UUID grabberId, byte collisionMask) {
         PacketDistributor.sendToPlayersInDimension(subLevel.getLevel(), new SyncGhostStatePacket(subLevel.getUniqueId(), grabberId, collisionMask));
     }
+
+    @Override
+    public void sendSyncGrabState(Player player, double mass, java.util.UUID subLevelId, org.joml.Vector3d localPivot, double distance) {
+        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+            PacketDistributor.sendToPlayer(serverPlayer, new SyncGrabStatePacket(player.getId(), mass, subLevelId, localPivot, distance));
+        }
+    }
 }

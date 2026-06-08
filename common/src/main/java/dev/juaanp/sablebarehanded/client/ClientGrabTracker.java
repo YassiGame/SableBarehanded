@@ -9,7 +9,7 @@ import dev.ryanhcode.sable.Sable;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -25,12 +25,27 @@ public class ClientGrabTracker {
     public static BlockPos assemblyTargetPos = null;
     public static int currentRequiredAssemblyTicks = 20;
     public static double initialAssemblyDistance = 0.0;
+    public static double grabbedMass = 0.0;
+    public static java.util.UUID grabbedSubLevelId = null;
+    public static org.joml.Vector3d localGrabPivot = null;
+    public static double grabRestDistance = 0.0;
+    public static double currentTetherStrain = 0.0;
+    public static boolean isWaitingForGrabSync = false;
+    public static float smoothPullIntensity = 0.0F;
+    public static boolean smoothPullIntensityInitialized = false;
+    public static boolean preventRegrabUntilRelease = false;
+    public static boolean wasHoldingGrabLastTick = false;
+    public static int keysReleasedTicks = 0;
+    public static boolean pendingStopGrab = false;
 
     public static void resetAssemblyCharge() {
         assemblyChargeTicks = 0;
         assemblyTargetPos = null;
         initialAssemblyDistance = 0.0;
         isPulling = false;
+        currentTetherStrain = 0.0;
+        smoothPullIntensity = 0.0F;
+        smoothPullIntensityInitialized = false;
     }
 
     public static void clientTick() {
@@ -40,6 +55,65 @@ public class ClientGrabTracker {
         if (isHoldingGrab) {
             mc.player.yBodyRot = mc.player.yHeadRot;
             mc.player.yBodyRotO = mc.player.yHeadRotO;
+
+            if (CommonConfig.COMMON.enablePhysicalTether && grabbedSubLevelId != null && localGrabPivot != null
+                    && !mc.player.isCreative() && !mc.player.isSpectator()) {
+                dev.ryanhcode.sable.api.sublevel.SubLevelContainer container = dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(mc.level);
+                if (container != null) {
+                    dev.ryanhcode.sable.sublevel.SubLevel subLevel = container.getSubLevel(grabbedSubLevelId);
+
+                    if (subLevel != null && !subLevel.isRemoved()) {
+                        org.joml.Vector3d actualGlobalPosJoml = subLevel.logicalPose().transformPosition(new org.joml.Vector3d(localGrabPivot));
+                        Vec3 actualPos = new Vec3(actualGlobalPosJoml.x, actualGlobalPosJoml.y, actualGlobalPosJoml.z);
+
+                        Vec3 eyePos = mc.player.getEyePosition();
+                        double currentDist = eyePos.distanceTo(actualPos);
+
+                        if (currentDist < CommonConfig.COMMON.minDistance) {
+                            Vec3 toBlock = actualPos.subtract(eyePos).normalize();
+                            Vec3 currentVel = mc.player.getDeltaMovement();
+
+                            double velTowardsBlock = currentVel.dot(toBlock);
+
+                            if (velTowardsBlock > 0) {
+                                currentVel = currentVel.add(toBlock.scale(-velTowardsBlock));
+                                mc.player.setDeltaMovement(currentVel);
+                            }
+                        }
+
+                        double armStretchTolerance = CommonConfig.COMMON.armStretchTolerance;
+
+                        double stretchBeyondRest = currentDist - grabRestDistance;
+                        if (stretchBeyondRest > armStretchTolerance) {
+                            double activeStretch = stretchBeyondRest - armStretchTolerance;
+                            currentTetherStrain = Mth.clamp(activeStretch / 2.0, 0.0, 1.0);
+                        } else {
+                            currentTetherStrain *= 0.85;
+                        }
+
+                        if (currentDist > grabRestDistance + armStretchTolerance) {
+                            double stretch = currentDist - (grabRestDistance + armStretchTolerance);
+                            Vec3 pullDirection = actualPos.subtract(eyePos).normalize();
+                            double encumbrance = getEncumbranceRatio(mc.player);
+                            double tetherStiffness = CommonConfig.COMMON.tetherStiffnessBase + (CommonConfig.COMMON.tetherStiffnessMultiplier * encumbrance);
+
+                            Vec3 correction = pullDirection.scale(stretch * tetherStiffness);
+                            Vec3 currentMotion = mc.player.getDeltaMovement();
+
+                            double correctionY = correction.y < 0 ? correction.y : (correction.y * 0.4);
+
+                            mc.player.setDeltaMovement(
+                                    currentMotion.x + correction.x,
+                                    currentMotion.y + correctionY,
+                                    currentMotion.z + correction.z
+                            );
+                        }
+                    } else {
+                        isHoldingGrab = false;
+                        resetGrabState();
+                    }
+                }
+            }
         }
 
         if (mc.screen != null) {
@@ -56,7 +130,17 @@ public class ClientGrabTracker {
         boolean bothDown = isAttackDown && isUseDown;
         boolean isSneaking = mc.player.isShiftKeyDown();
 
-        if (bothDown && !isHoldingGrab && mc.player.getMainHandItem().isEmpty()) {
+        if (!bothDown) {
+            keysReleasedTicks++;
+        } else {
+            keysReleasedTicks = 0;
+        }
+
+        if (keysReleasedTicks >= CommonConfig.CLIENT.regrabDebounceTicks) {
+            preventRegrabUntilRelease = false;
+        }
+
+        if (bothDown && !isHoldingGrab && mc.player.getMainHandItem().isEmpty() && !preventRegrabUntilRelease) {
 
             if (assemblyTargetPos == null) {
                 double reach = GrabPhysicsManager.getGrabReach(mc.player);
@@ -88,7 +172,7 @@ public class ClientGrabTracker {
                         assemblyTargetPos = currentPos;
                         assemblyChargeTicks = 1;
                         isPulling = false;
-                        initialAssemblyDistance = mc.player.getEyePosition().distanceTo(blockCenter);
+                        initialAssemblyDistance = distanceToHit;
 
                         var blocksToAssemble = AssemblyBehaviorHelper.getConnectedBlocks(mc.level, currentPos);
                         currentRequiredAssemblyTicks = AssemblyBehaviorHelper.calculateAssemblyTicks(mc.player, mc.level, blocksToAssemble);
@@ -96,8 +180,7 @@ public class ClientGrabTracker {
                         if (mc.gameMode != null) mc.gameMode.stopDestroyBlock();
                     }
                 }
-            }
-            else {
+            } else {
                 if (!isSneaking) {
                     resetAssemblyCharge();
                     return;
@@ -107,7 +190,7 @@ public class ClientGrabTracker {
                 Vec3 playerEyePos = mc.player.getEyePosition();
                 double currentDist = playerEyePos.distanceTo(targetCenter);
 
-                if (currentDist > CommonConfig.COMMON.barehandedAssemblyMaxDistance + 1.5) {
+                if (currentDist > CommonConfig.COMMON.barehandedAssemblyMaxDistance + CommonConfig.COMMON.assemblyClientDistanceTolerance) {
                     resetAssemblyCharge();
                     return;
                 }
@@ -115,20 +198,62 @@ public class ClientGrabTracker {
                 double stretch = currentDist - initialAssemblyDistance;
                 boolean requiresPulling = currentRequiredAssemblyTicks > 2;
 
-                if (!requiresPulling || stretch > CommonConfig.COMMON.pullThreshold) {
-                    isPulling = true;
-                    assemblyChargeTicks++;
+                double maxPullDistance = initialAssemblyDistance + CommonConfig.COMMON.armStretchTolerance;
 
-                    if (requiresPulling) {
-                        Vec3 pullDirection = targetCenter.subtract(playerEyePos).normalize();
-                        double pullStrength = stretch * CommonConfig.COMMON.pullResistanceMultiplier;
-                        Vec3 pullForce = pullDirection.scale(pullStrength);
-                        Vec3 currentMovement = mc.player.getDeltaMovement();
+                float targetPull = 0.0F;
+                boolean shouldAdvanceCharge = false;
 
-                        mc.player.setDeltaMovement(currentMovement.scale(CommonConfig.COMMON.assemblyMovementDamping).add(pullForce));
-                    }
+                if (!requiresPulling) {
+                    targetPull = 1.0F;
+                    shouldAdvanceCharge = true;
                 } else {
-                    isPulling = false;
+                    if (stretch > CommonConfig.COMMON.pullThreshold) {
+                        targetPull = 1.0F;
+                        shouldAdvanceCharge = true;
+                    } else if (stretch > 0.05) {
+                        targetPull = (float) (stretch / CommonConfig.COMMON.pullThreshold);
+                        shouldAdvanceCharge = true;
+                    } else {
+                        targetPull = 0.0F;
+                        shouldAdvanceCharge = false;
+                    }
+                }
+
+                if (!smoothPullIntensityInitialized) {
+                    smoothPullIntensity = targetPull;
+                    smoothPullIntensityInitialized = true;
+                } else {
+                    smoothPullIntensity += (targetPull - smoothPullIntensity) * 0.15F;
+                }
+                isPulling = smoothPullIntensity > 0.05F;
+
+                Vec3 currentMovement = mc.player.getDeltaMovement();
+
+                if (requiresPulling) {
+                    Vec3 awayDirection = playerEyePos.subtract(targetCenter).normalize();
+                    double awaySpeed = currentMovement.dot(awayDirection);
+
+                    if (currentDist > maxPullDistance) {
+                        if (awaySpeed > 0) {
+                            currentMovement = currentMovement.add(awayDirection.scale(-awaySpeed));
+                        }
+                    } else if (awaySpeed > 0) {
+                        double maxRetrocesoSpeed = 0.08;
+                        if (awaySpeed > maxRetrocesoSpeed) {
+                            double excess = awaySpeed - maxRetrocesoSpeed;
+                            currentMovement = currentMovement.add(awayDirection.scale(-excess));
+                        }
+                    }
+
+                    if (stretch > 0.05) {
+                        currentMovement = currentMovement.scale(CommonConfig.COMMON.assemblyMovementDamping);
+                    }
+
+                    mc.player.setDeltaMovement(currentMovement);
+                }
+
+                if (shouldAdvanceCharge) {
+                    assemblyChargeTicks++;
                 }
 
                 if (mc.gameMode != null) mc.gameMode.stopDestroyBlock();
@@ -136,16 +261,28 @@ public class ClientGrabTracker {
                 if (assemblyChargeTicks >= currentRequiredAssemblyTicks) {
                     Services.NETWORK.sendAssembleGrabRequest(assemblyTargetPos);
                     isHoldingGrab = true;
+                    isWaitingForGrabSync = true;
+                    currentTetherStrain = 0.0;
                     resetAssemblyCharge();
                 }
             }
         } else if (!bothDown && isHoldingGrab) {
-            isHoldingGrab = false;
-            Services.NETWORK.sendStopGrabbingRequest();
-            resetAssemblyCharge();
-        } else {
+            if (isWaitingForGrabSync) {
+                pendingStopGrab = true;
+            } else {
+                isHoldingGrab = false;
+                Services.NETWORK.sendStopGrabbingRequest();
+                resetAssemblyCharge();
+            }
+        } else if (!isHoldingGrab) {
             resetAssemblyCharge();
         }
+
+        if (wasHoldingGrabLastTick && !isHoldingGrab && bothDown) {
+            preventRegrabUntilRelease = true;
+            keysReleasedTicks = 0;
+        }
+        wasHoldingGrabLastTick = isHoldingGrab;
     }
 
     public static void renderSableOverlay(GuiGraphics graphics) {
@@ -232,5 +369,100 @@ public class ClientGrabTracker {
             }
         }
         return false;
+    }
+
+    public static double getEncumbranceRatio(net.minecraft.world.entity.player.Player player) {
+        if (!CommonConfig.COMMON.enableEncumbrance || !isHoldingGrab) return 0.0;
+
+        if (player.isCreative() || player.isSpectator()) return 0.0;
+
+        if (isWaitingForGrabSync && grabbedMass <= 0.0) return 1.0;
+
+        if (grabbedMass <= 0.0) return 0.0;
+
+        double strengthMultiplier = 1.0;
+        if (player.hasEffect(net.minecraft.world.effect.MobEffects.DAMAGE_BOOST)) {
+            int amplifier = player.getEffect(net.minecraft.world.effect.MobEffects.DAMAGE_BOOST).getAmplifier();
+            strengthMultiplier = amplifier == 0 ? CommonConfig.COMMON.strength1Multiplier : CommonConfig.COMMON.strength2Multiplier;
+        }
+
+        double maxCapacity = CommonConfig.COMMON.maxForce * strengthMultiplier;
+        double objectWeight = grabbedMass * CommonConfig.COMMON.physicsGravity;
+        double rawRatio = objectWeight / maxCapacity;
+
+        return Math.min(Math.pow(rawRatio, 2.0), 1.0);
+    }
+
+    public static double getEffectiveEncumbranceRatio(net.minecraft.world.entity.player.Player player) {
+        if (assemblyTargetPos != null) return 1.0;
+
+        if (isHoldingGrab) {
+            if (isWaitingForGrabSync && grabbedMass <= 0.0) return 1.0;
+
+            return getEncumbranceRatio(player);
+        }
+
+        return 0.0;
+    }
+
+    public static double getCameraRestrictionRatio(net.minecraft.world.entity.player.Player player) {
+        double encumbrance = getEffectiveEncumbranceRatio(player);
+        if (encumbrance <= 0.0) return 0.0;
+        return Math.max(encumbrance, currentTetherStrain);
+    }
+
+    public static void resetGrabState() {
+        grabbedMass = 0.0;
+        grabbedSubLevelId = null;
+        localGrabPivot = null;
+        grabRestDistance = 0.0;
+        currentTetherStrain = 0.0;
+        isHoldingGrab = false;
+        isWaitingForGrabSync = false;
+        pendingStopGrab = false;
+    }
+
+    public static Vec3 getCurrentObjectPosition() {
+        if (!isHoldingGrab || grabbedSubLevelId == null || localGrabPivot == null) return null;
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null) return null;
+
+        dev.ryanhcode.sable.api.sublevel.SubLevelContainer container = dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(mc.level);
+        if (container != null) {
+            dev.ryanhcode.sable.sublevel.SubLevel subLevel = container.getSubLevel(grabbedSubLevelId);
+            if (subLevel != null && !subLevel.isRemoved()) {
+                org.joml.Vector3d actualGlobalPosJoml = subLevel.logicalPose().transformPosition(new org.joml.Vector3d(localGrabPivot));
+                return new Vec3(actualGlobalPosJoml.x, actualGlobalPosJoml.y, actualGlobalPosJoml.z);
+            }
+        }
+        return null;
+    }
+
+    private static boolean pushPlayerToMinDistance(net.minecraft.world.entity.player.Player player, Vec3 targetPos) {
+        Vec3 eyePos = player.getEyePosition();
+        double currentDist = eyePos.distanceTo(targetPos);
+        double minDist = CommonConfig.COMMON.minDistance;
+
+        if (currentDist >= minDist) {
+            return false;
+        }
+
+        Vec3 pushDirection = eyePos.subtract(targetPos).normalize();
+        double pushAmount = minDist - currentDist;
+
+        player.setPos(
+                player.getX() + pushDirection.x * pushAmount,
+                player.getY() + pushDirection.y * pushAmount,
+                player.getZ() + pushDirection.z * pushAmount
+        );
+
+        Vec3 currentVel = player.getDeltaMovement();
+        double velTowardsBlock = currentVel.dot(pushDirection.scale(-1.0));
+        if (velTowardsBlock > 0) {
+            currentVel = currentVel.add(pushDirection.scale(velTowardsBlock));
+            player.setDeltaMovement(currentVel);
+        }
+
+        return true;
     }
 }

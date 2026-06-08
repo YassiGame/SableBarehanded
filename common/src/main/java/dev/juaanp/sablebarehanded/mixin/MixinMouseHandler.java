@@ -1,7 +1,13 @@
 package dev.juaanp.sablebarehanded.mixin;
 
+import dev.juaanp.sablebarehanded.client.ClientGrabTracker;
 import dev.juaanp.sablebarehanded.client.handler.RotationInputHandler;
+import dev.juaanp.sablebarehanded.config.CommonConfig;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.MouseHandler;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -13,6 +19,7 @@ public class MixinMouseHandler {
 
     @Shadow private double accumulatedDX;
     @Shadow private double accumulatedDY;
+    @Shadow private Minecraft minecraft;
 
     @Inject(method = "turnPlayer", at = @At("HEAD"), cancellable = true)
     private void onTurnPlayer(CallbackInfo ci) {
@@ -20,6 +27,74 @@ public class MixinMouseHandler {
             this.accumulatedDX = 0.0;
             this.accumulatedDY = 0.0;
             ci.cancel();
+        }
+    }
+
+    @Inject(method = "turnPlayer", at = @At("HEAD"))
+    private void restrictCamera(CallbackInfo ci) {
+        if (this.minecraft == null || this.minecraft.player == null) return;
+
+        Player player = this.minecraft.player;
+
+        double encumbrance = ClientGrabTracker.getEffectiveEncumbranceRatio(player);
+
+        if (encumbrance > 0.0) {
+            Vec3 objectPos = ClientGrabTracker.getCurrentObjectPosition();
+
+            if (objectPos != null) {
+                Vec3 playerEye = player.getEyePosition();
+                Vec3 toObject = objectPos.subtract(playerEye).normalize();
+                Vec3 currentLook = player.getLookAngle();
+
+                double currentDot = currentLook.dot(toObject);
+
+                double sensitivity = this.minecraft.options.sensitivity().get();
+                double f = sensitivity * 0.6F + 0.2F;
+                double f1 = f * f * f;
+                double f2 = f1 * 8.0F;
+
+                double dYaw = this.accumulatedDX * f2 * 0.15F;
+                double dPitch = this.accumulatedDY * f2 * 0.15F;
+                if (this.minecraft.options.invertYMouse().get()) {
+                    dPitch = -dPitch;
+                }
+
+                float newYaw = player.getYRot() + (float)dYaw;
+                float newPitch = player.getXRot() + (float)dPitch;
+                newPitch = Mth.clamp(newPitch, -90.0F, 90.0F);
+
+                float pRad = newPitch * ((float)Math.PI / 180F);
+                float yRad = -newYaw * ((float)Math.PI / 180F);
+                float cosY = Mth.cos(yRad);
+                float sinY = Mth.sin(yRad);
+                float cosP = Mth.cos(pRad);
+                float sinP = Mth.sin(pRad);
+                Vec3 newLook = new Vec3((double)(sinY * cosP), (double)(-sinP), (double)(cosY * cosP));
+
+                double newDot = newLook.dot(toObject);
+                double turningAway = currentDot - newDot;
+
+                double baseScale = 1.0 - (encumbrance * CommonConfig.COMMON.maxCameraPenalty);
+
+                if (turningAway > 0.0) {
+                    double dynamicResistance = turningAway * encumbrance * 15.0;
+                    double currentAwayness = Math.max(0.0, 1.0 - currentDot);
+                    double angleResistance = currentAwayness * encumbrance * 2.5;
+
+                    double directionalScale = 1.0 - (dynamicResistance + angleResistance);
+                    directionalScale = Math.max(0.0, directionalScale);
+
+                    baseScale *= directionalScale;
+                }
+
+                this.accumulatedDX *= baseScale;
+                this.accumulatedDY *= baseScale;
+
+            } else {
+                double cameraScale = 1.0 - (encumbrance * CommonConfig.COMMON.maxCameraPenalty);
+                this.accumulatedDX *= cameraScale;
+                this.accumulatedDY *= cameraScale;
+            }
         }
     }
 }
