@@ -2,7 +2,7 @@ package dev.juaanp.sablebarehanded.client.handler;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import dev.juaanp.sablebarehanded.config.CommonConfig;
+import dev.juaanp.sablebarehanded.config.ClientConfig;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
@@ -21,7 +21,7 @@ public class RenderAnimationHandler {
             float equippedProgress, ItemStack stack, PoseStack poseStack, MultiBufferSource buffer,
             int combinedLight, EntityRenderDispatcher dispatcher, float ease) {
 
-        if (CommonConfig.CLIENT.hideHandsWhileGrabbing) {
+        if (ClientConfig.INSTANCE.hideHandsWhileGrabbing) {
             return;
         }
 
@@ -45,9 +45,9 @@ public class RenderAnimationHandler {
 
         PoseStack customStack = new PoseStack();
         customStack.translate(
-                side * (float) CommonConfig.CLIENT.grabArmOffsetX,
-                (float) CommonConfig.CLIENT.grabArmOffsetY + equippedProgress * -0.6F,
-                (float) CommonConfig.CLIENT.grabArmOffsetZ
+                side * (float) ClientConfig.INSTANCE.grabArmOffsetX,
+                (float) ClientConfig.INSTANCE.grabArmOffsetY + equippedProgress * -0.6F,
+                (float) ClientConfig.INSTANCE.grabArmOffsetZ
         );
         customStack.mulPose(Axis.XP.rotationDegrees(-60.0F));
         customStack.mulPose(Axis.YP.rotationDegrees(side * 5.0F));

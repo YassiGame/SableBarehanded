@@ -1,8 +1,8 @@
 package dev.juaanp.sablebarehanded.mixin;
 
-import dev.juaanp.sablebarehanded.client.ClientGrabTracker;
+import dev.juaanp.sablebarehanded.client.ClientGrabSession;
 import dev.juaanp.sablebarehanded.client.handler.RotationInputHandler;
-import dev.juaanp.sablebarehanded.config.CommonConfig;
+import dev.juaanp.sablebarehanded.config.ServerConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.MouseHandler;
 import net.minecraft.util.Mth;
@@ -36,10 +36,10 @@ public class MixinMouseHandler {
 
         Player player = this.minecraft.player;
 
-        double encumbrance = ClientGrabTracker.getEffectiveEncumbranceRatio(player);
+        double encumbrance = ClientGrabSession.getEffectiveEncumbranceRatio(player);
 
         if (encumbrance > 0.0) {
-            Vec3 objectPos = ClientGrabTracker.getCurrentObjectPosition();
+            Vec3 objectPos = ClientGrabSession.getCurrentObjectPosition();
 
             if (objectPos != null) {
                 Vec3 playerEye = player.getEyePosition();
@@ -74,7 +74,7 @@ public class MixinMouseHandler {
                 double newDot = newLook.dot(toObject);
                 double turningAway = currentDot - newDot;
 
-                double baseScale = 1.0 - (encumbrance * CommonConfig.COMMON.maxCameraPenalty);
+                double baseScale = 1.0 - (encumbrance * ServerConfig.INSTANCE.maxCameraPenalty);
 
                 if (turningAway > 0.0) {
                     double dynamicResistance = turningAway * encumbrance * 15.0;
@@ -91,7 +91,7 @@ public class MixinMouseHandler {
                 this.accumulatedDY *= baseScale;
 
             } else {
-                double cameraScale = 1.0 - (encumbrance * CommonConfig.COMMON.maxCameraPenalty);
+                double cameraScale = 1.0 - (encumbrance * ServerConfig.INSTANCE.maxCameraPenalty);
                 this.accumulatedDX *= cameraScale;
                 this.accumulatedDY *= cameraScale;
             }

@@ -1,26 +1,28 @@
 package dev.juaanp.sablebarehanded.client.handler;
 
-import dev.juaanp.sablebarehanded.client.ClientGrabTracker;
+import dev.juaanp.sablebarehanded.client.ClientGrabSession;
+import dev.juaanp.sablebarehanded.client.ClientInputTracker;
 import dev.juaanp.sablebarehanded.client.KeyBindings;
-import dev.juaanp.sablebarehanded.config.CommonConfig;
+import dev.juaanp.sablebarehanded.config.ClientConfig;
+import dev.juaanp.sablebarehanded.config.ServerConfig;
 
 public class RotationInputHandler {
 
     public static boolean handleRotation(double dx, double dy) {
-        if (ClientGrabTracker.isHoldingGrab && KeyBindings.ROTATE_KEY.isDown() && CommonConfig.COMMON.enableRotation) {
+        if (ClientGrabSession.isHoldingGrab && KeyBindings.ROTATE_KEY.isDown() && ServerConfig.INSTANCE.enableRotation) {
 
             if (dx != 0.0 || dy != 0.0) {
-                double hSens = CommonConfig.CLIENT.horizontalRotationSensitivity * 0.01;
-                double vSens = CommonConfig.CLIENT.verticalRotationSensitivity * 0.01;
+                double hSens = ClientConfig.INSTANCE.horizontalRotationSensitivity * 0.01;
+                double vSens = ClientConfig.INSTANCE.verticalRotationSensitivity * 0.01;
 
                 double yaw   = -dx * hSens;
                 double pitch = dy * vSens;
 
-                if (CommonConfig.CLIENT.invertHorizontalRotation) yaw = -yaw;
-                if (CommonConfig.CLIENT.invertVerticalRotation)   pitch = -pitch;
+                if (ClientConfig.INSTANCE.invertHorizontalRotation) yaw = -yaw;
+                if (ClientConfig.INSTANCE.invertVerticalRotation)   pitch = -pitch;
 
-                ClientGrabTracker.pendingYaw   += yaw;
-                ClientGrabTracker.pendingPitch += pitch;
+                ClientInputTracker.pendingYaw   += yaw;
+                ClientInputTracker.pendingPitch += pitch;
             }
 
             return true;

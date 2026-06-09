@@ -1,6 +1,7 @@
 package dev.juaanp.sablebarehanded.handler;
 
-import dev.juaanp.sablebarehanded.physics.GrabPhysicsManager;
+import dev.juaanp.sablebarehanded.physics.GrabCollisionHandler;
+import dev.juaanp.sablebarehanded.physics.GrabPhysicsController;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import net.minecraft.world.entity.Entity;
 
@@ -18,6 +19,6 @@ public class CollisionFilterHandler {
 
     public static boolean shouldFilterSubLevel(SubLevel subLevel) {
         Entity entity = CURRENT_COLLIDING_ENTITY.get();
-        return entity != null && GrabPhysicsManager.shouldIgnoreEntityCollision(subLevel, entity);
+        return entity != null && GrabCollisionHandler.shouldIgnoreEntityCollision(subLevel, entity);
     }
 }

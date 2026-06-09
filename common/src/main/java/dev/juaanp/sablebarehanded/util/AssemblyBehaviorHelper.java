@@ -1,6 +1,6 @@
 package dev.juaanp.sablebarehanded.util;
 
-import dev.juaanp.sablebarehanded.config.CommonConfig;
+import dev.juaanp.sablebarehanded.config.ServerConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.player.Player;
@@ -18,6 +18,12 @@ import net.minecraft.world.level.material.Fluids;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Proxy;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+import java.util.Set;
 
 public class AssemblyBehaviorHelper {
 
@@ -32,8 +38,8 @@ public class AssemblyBehaviorHelper {
         return state.hasBlockEntity() && !state.isCollisionShapeFullBlock(level, pos);
     }
 
-    public static java.util.List<BlockPos> getConnectedBlocks(Level level, BlockPos pos) {
-        java.util.List<BlockPos> blocks = new java.util.ArrayList<>();
+    public static List<BlockPos> getConnectedBlocks(Level level, BlockPos pos) {
+        List<BlockPos> blocks = new ArrayList<>();
         blocks.add(pos);
 
         BlockState baseState = level.getBlockState(pos);
@@ -43,16 +49,14 @@ public class AssemblyBehaviorHelper {
             if (type != ChestType.SINGLE) {
                 blocks.add(pos.relative(ChestBlock.getConnectedDirection(baseState)));
             }
-        }
-        else if (baseState.getBlock() instanceof DoorBlock) {
+        } else if (baseState.getBlock() instanceof DoorBlock) {
             var half = baseState.getValue(DoorBlock.HALF);
             if (half == DoubleBlockHalf.LOWER) {
                 blocks.add(pos.above());
             } else {
                 blocks.add(pos.below());
             }
-        }
-        else if (baseState.getBlock() instanceof BedBlock) {
+        } else if (baseState.getBlock() instanceof BedBlock) {
             var part = baseState.getValue(BedBlock.PART);
             var facing = baseState.getValue(BedBlock.FACING);
             if (part == BedPart.HEAD) {
@@ -62,15 +66,14 @@ public class AssemblyBehaviorHelper {
             }
         }
 
-        java.util.Set<BlockPos> assembly = new java.util.HashSet<>(blocks);
-        java.util.Queue<BlockPos> queue = new java.util.LinkedList<>(blocks);
+        Set<BlockPos> assembly = new HashSet<>(blocks);
+        Queue<BlockPos> queue = new LinkedList<>(blocks);
 
         LevelReader simulatedLevel = (LevelReader) Proxy.newProxyInstance(
                 LevelReader.class.getClassLoader(),
-                new Class<?>[] { LevelReader.class },
+                new Class<?>[]{LevelReader.class},
                 (proxy, method, args) -> {
-                    if (args != null && args.length == 1 && args[0] instanceof BlockPos) {
-                        BlockPos p = (BlockPos) args[0];
+                    if (args != null && args.length == 1 && args[0] instanceof BlockPos p) {
                         if (assembly.contains(p)) {
                             Class<?> returnType = method.getReturnType();
                             if (returnType == BlockState.class) {
@@ -108,11 +111,11 @@ public class AssemblyBehaviorHelper {
             }
         }
 
-        return new java.util.ArrayList<>(assembly);
+        return new ArrayList<>(assembly);
     }
 
-    public static int calculateAssemblyTicks(Player player, Level level, java.util.List<BlockPos> blocks) {
-        boolean isCreativeSuper = player.isCreative() && CommonConfig.COMMON.creativeSuperStrength;
+    public static int calculateAssemblyTicks(Player player, Level level, List<BlockPos> blocks) {
+        boolean isCreativeSuper = player.isCreative() && ServerConfig.INSTANCE.creativeSuperStrength;
         if (isCreativeSuper) return 1;
 
         int totalTicks = 0;
@@ -120,7 +123,7 @@ public class AssemblyBehaviorHelper {
             BlockState state = level.getBlockState(pos);
 
             if (isFastLift(level, pos, state)) {
-                totalTicks += 2;
+                totalTicks += ServerConfig.INSTANCE.fastLiftAssemblyTicks;
             } else {
                 float progressPerTick = state.getDestroyProgress(player, level, pos);
                 if (progressPerTick <= 0.0F) return Integer.MAX_VALUE;
@@ -134,9 +137,9 @@ public class AssemblyBehaviorHelper {
         var strengthEffect = player.getEffect(MobEffects.DAMAGE_BOOST);
         if (strengthEffect != null) {
             int amp = strengthEffect.getAmplifier();
-            strengthMulti = amp == 0 ? CommonConfig.COMMON.strength1Multiplier : CommonConfig.COMMON.strength2Multiplier;
+            strengthMulti = amp == 0 ? ServerConfig.INSTANCE.strength1Multiplier : ServerConfig.INSTANCE.strength2Multiplier;
         }
 
-        return (int) Math.max(1, (totalTicks / strengthMulti) / CommonConfig.COMMON.barehandedAssemblySpeedMultiplier);
+        return (int) Math.max(1, (totalTicks / strengthMulti) / ServerConfig.INSTANCE.barehandedAssemblySpeedMultiplier);
     }
 }

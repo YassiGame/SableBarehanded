@@ -3,7 +3,8 @@ package dev.juaanp.sablebarehanded.client;
 import dev.juaanp.sablebarehanded.network.StartGrabbingAnimationPacket;
 import dev.juaanp.sablebarehanded.network.StopGrabbingAnimationPacket;
 import dev.juaanp.sablebarehanded.network.SyncGrabStatePacket;
-import dev.juaanp.sablebarehanded.platform.Services;
+import dev.juaanp.sablebarehanded.physics.GrabCollisionHandler;
+import dev.juaanp.sablebarehanded.network.SyncGhostStatePacket;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -19,28 +20,13 @@ public class ClientPayloadHandler {
         Player player = getPlayerFromId(packet.entityId());
         if (player != null) {
             GRABBING_PLAYERS.add(player.getUUID());
-            if (player == Minecraft.getInstance().player) {
-                ClientGrabTracker.isHoldingGrab = true;
-            }
         }
     }
 
     public static void handleSyncGrabState(SyncGrabStatePacket packet) {
         Player player = getPlayerFromId(packet.entityId());
         if (player == Minecraft.getInstance().player) {
-            if (ClientGrabTracker.pendingStopGrab) {
-                ClientGrabTracker.isHoldingGrab = false;
-                ClientGrabTracker.resetGrabState();
-                Services.NETWORK.sendStopGrabbingRequest();
-                return;
-            }
-
-            ClientGrabTracker.isHoldingGrab = true;
-            ClientGrabTracker.isWaitingForGrabSync = false;
-            ClientGrabTracker.grabbedMass = packet.mass();
-            ClientGrabTracker.grabbedSubLevelId = packet.subLevelId();
-            ClientGrabTracker.localGrabPivot = packet.localPivot();
-            ClientGrabTracker.grabRestDistance = packet.distance();
+            ClientGrabSession.syncFromServer(packet.entityId(), packet.mass(), packet.subLevelId(), packet.localPivot(), packet.distance());
         }
     }
 
@@ -50,10 +36,14 @@ public class ClientPayloadHandler {
             GRABBING_PLAYERS.remove(player.getUUID());
 
             if (player == Minecraft.getInstance().player) {
-                ClientGrabTracker.isHoldingGrab = false;
-                ClientGrabTracker.resetGrabState();
+                ClientGrabSession.reset();
+                ClientAssemblyTracker.reset();
             }
         }
+    }
+    
+    public static void handleSyncGhostState(SyncGhostStatePacket packet) {
+        GrabCollisionHandler.setClientGhostState(packet.subLevelId(), packet.grabberId(), packet.collisionMask());
     }
 
     private static Player getPlayerFromId(int entityId) {

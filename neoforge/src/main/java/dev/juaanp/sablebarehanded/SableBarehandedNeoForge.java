@@ -1,53 +1,99 @@
 package dev.juaanp.sablebarehanded;
 
+import com.google.gson.Gson;
+import dev.juaanp.sablebarehanded.client.ClientPayloadHandler;
 import dev.juaanp.sablebarehanded.client.NeoForgeClientSetup;
-import dev.juaanp.sablebarehanded.config.CommonConfig;
+import dev.juaanp.sablebarehanded.config.ServerConfig;
 import dev.juaanp.sablebarehanded.network.*;
+import dev.juaanp.sablebarehanded.physics.GrabPhysicsController;
+import dev.juaanp.sablebarehanded.physics.ServerGrabManager;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 @Mod(Constants.MOD_ID)
 public class SableBarehandedNeoForge {
+    private static final Gson GSON = new Gson();
 
     public SableBarehandedNeoForge(IEventBus modEventBus, ModContainer modContainer) {
-        CommonConfig.load();
+        ServerConfig.load();
 
         modEventBus.addListener(this::registerPayloads);
+
         NeoForge.EVENT_BUS.addListener(this::onPlayerJoin);
+        NeoForge.EVENT_BUS.addListener(this::onPlayerLoggedOut);
+        NeoForge.EVENT_BUS.addListener(this::onPlayerDeath);
+        NeoForge.EVENT_BUS.addListener(this::onPlayerTick);
 
         if (FMLEnvironment.dist.isClient()) {
-            NeoForgeClientSetup.registerConfigScreen(modContainer);
+            NeoForgeClientSetup.init(modEventBus, modContainer);
+        }
+    }
+
+    private void onPlayerTick(PlayerTickEvent.Post event) {
+        if (event.getEntity() instanceof ServerPlayer serverPlayer) {
+            GrabPhysicsController.tickPlayer(serverPlayer);
         }
     }
 
     private void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer serverPlayer) {
-            SyncConfigPacket packet = new SyncConfigPacket(CommonConfig.getCommonJson());
+            SyncConfigPacket packet = new SyncConfigPacket(GSON.toJson(ServerConfig.INSTANCE));
             PacketDistributor.sendToPlayer(serverPlayer, packet);
+        }
+    }
+
+    private void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
+        if (event.getEntity() instanceof ServerPlayer serverPlayer) {
+            ServerGrabManager.onPlayerLoggedOut(serverPlayer);
+        }
+    }
+
+    private void onPlayerDeath(LivingDeathEvent event) {
+        if (event.getEntity() instanceof ServerPlayer serverPlayer) {
+            ServerGrabManager.onPlayerDeath(serverPlayer);
         }
     }
 
     private void registerPayloads(final RegisterPayloadHandlersEvent event) {
         final PayloadRegistrar registrar = event.registrar(Constants.MOD_ID);
 
-        registrar.playToServer(RequestGrabPacket.TYPE, RequestGrabPacket.CODEC, NeoForgePacketHandlers::handleRequestGrab);
-        registrar.playToServer(AssembleGrabPacket.TYPE, AssembleGrabPacket.CODEC, NeoForgePacketHandlers::handleAssembleGrab);
-        registrar.playToServer(StopGrabbingPacket.TYPE, StopGrabbingPacket.CODEC, NeoForgePacketHandlers::handleStopGrabbing);
-        registrar.playToServer(RotateGrabPacket.TYPE, RotateGrabPacket.CODEC, NeoForgePacketHandlers::handleRotateGrab);
+        // C2S
+        registrar.playToServer(RequestGrabPacket.TYPE, RequestGrabPacket.CODEC, (payload, context) ->
+                context.enqueueWork(() -> ServerPayloadHandler.handleRequestGrab((ServerPlayer) context.player(), payload)));
 
-        registrar.playToClient(StartGrabbingAnimationPacket.TYPE, StartGrabbingAnimationPacket.CODEC, NeoForgePacketHandlers::handleStartAnim);
-        registrar.playToClient(StopGrabbingAnimationPacket.TYPE, StopGrabbingAnimationPacket.CODEC, NeoForgePacketHandlers::handleStopAnim);
-        registrar.playToClient(SyncGhostStatePacket.TYPE, SyncGhostStatePacket.CODEC, NeoForgePacketHandlers::handleGhostStateSync);
+        registrar.playToServer(AssembleGrabPacket.TYPE, AssembleGrabPacket.CODEC, (payload, context) ->
+                context.enqueueWork(() -> ServerPayloadHandler.handleAssembleGrab((ServerPlayer) context.player(), payload)));
 
-        registrar.playToClient(SyncConfigPacket.TYPE, SyncConfigPacket.CODEC, NeoForgePacketHandlers::handleConfigSync);
-        registrar.playToClient(SyncGrabStatePacket.TYPE, SyncGrabStatePacket.CODEC, NeoForgePacketHandlers::handleSyncGrabState);
+        registrar.playToServer(StopGrabbingPacket.TYPE, StopGrabbingPacket.CODEC, (payload, context) ->
+                context.enqueueWork(() -> ServerPayloadHandler.handleStopGrabbing((ServerPlayer) context.player(), payload)));
+
+        registrar.playToServer(RotateGrabPacket.TYPE, RotateGrabPacket.CODEC, (payload, context) ->
+                context.enqueueWork(() -> ServerPayloadHandler.handleRotateGrab((ServerPlayer) context.player(), payload)));
+
+        // S2C
+        registrar.playToClient(StartGrabbingAnimationPacket.TYPE, StartGrabbingAnimationPacket.CODEC, (payload, context) ->
+                context.enqueueWork(() -> ClientPayloadHandler.handleStartGrabbingAnimation(payload)));
+
+        registrar.playToClient(StopGrabbingAnimationPacket.TYPE, StopGrabbingAnimationPacket.CODEC, (payload, context) ->
+                context.enqueueWork(() -> ClientPayloadHandler.handleStopGrabbingAnimation(payload)));
+
+        registrar.playToClient(SyncGhostStatePacket.TYPE, SyncGhostStatePacket.CODEC, (payload, context) ->
+                context.enqueueWork(() -> ClientPayloadHandler.handleSyncGhostState(payload)));
+
+        registrar.playToClient(SyncGrabStatePacket.TYPE, SyncGrabStatePacket.CODEC, (payload, context) ->
+                context.enqueueWork(() -> ClientPayloadHandler.handleSyncGrabState(payload)));
+
+        registrar.playToClient(SyncConfigPacket.TYPE, SyncConfigPacket.CODEC, (payload, context) ->
+                context.enqueueWork(() -> ClientConfigSyncHandler.applyServerConfig(payload.configJson())));
     }
 }

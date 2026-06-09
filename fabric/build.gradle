@@ -1,6 +1,7 @@
 plugins {
     id 'multiloader-loader'
     id 'fabric-loom'
+    id 'me.modmuss50.mod-publish-plugin' version '1.1.0'
 }
 
 repositories {
@@ -59,5 +60,34 @@ loom {
             ideConfigGenerated(true)
             runDir('runs/server')
         }
+    }
+}
+
+publishMods {
+    file = remapJar.archiveFile
+    changelog = rootProject.ext.getChangelog()
+    type = STABLE
+    modLoaders.add("fabric")
+
+    curseforge {
+        projectId = providers.environmentVariable("CURSEFORGE_ID").orElse(rootProject.curseforge_id)
+        accessToken = providers.environmentVariable("CURSEFORGE_TOKEN")
+                .orElse(providers.gradleProperty("curseforge_token").orElse("DUMMY_TOKEN_FOR_BUILD"))
+        minecraftVersions.add("1.21.1")
+
+        requires("fabric-api")
+        requires("sable")
+        requires("cloth-config")
+    }
+
+    modrinth {
+        projectId = providers.environmentVariable("MODRINTH_ID").orElse(rootProject.modrinth_id)
+        accessToken = providers.environmentVariable("MODRINTH_TOKEN")
+                .orElse(providers.gradleProperty("modrinth_token").orElse("DUMMY_TOKEN_FOR_BUILD"))
+        minecraftVersions.add("1.21.1")
+
+        requires("fabric-api")
+        requires("sable")
+        requires("cloth-config")
     }
 }

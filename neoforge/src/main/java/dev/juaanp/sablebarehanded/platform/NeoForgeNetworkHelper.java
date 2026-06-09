@@ -6,7 +6,6 @@ import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.network.PacketDistributor;
-
 import java.util.UUID;
 
 public class NeoForgeNetworkHelper implements INetworkHelper {

@@ -1,8 +1,8 @@
 package dev.juaanp.sablebarehanded.mixin;
 
-import dev.juaanp.sablebarehanded.client.ClientGrabTracker;
+import dev.juaanp.sablebarehanded.client.ClientGrabSession;
 import dev.juaanp.sablebarehanded.client.handler.MovementInputHandler;
-import dev.juaanp.sablebarehanded.config.CommonConfig;
+import dev.juaanp.sablebarehanded.config.ServerConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.KeyboardInput;
 import org.spongepowered.asm.mixin.Mixin;
@@ -30,15 +30,15 @@ public class MixinKeyboardInput {
         }
 
         if (Minecraft.getInstance().player != null) {
-            double encumbrance = ClientGrabTracker.getEffectiveEncumbranceRatio(Minecraft.getInstance().player);
+            double encumbrance = ClientGrabSession.getEffectiveEncumbranceRatio(Minecraft.getInstance().player);
 
             if (encumbrance > 0.0) {
-                float movementScale = (float) (1.0 - (encumbrance * CommonConfig.COMMON.maxMovementPenalty));
+                float movementScale = (float) (1.0 - (encumbrance * ServerConfig.INSTANCE.maxMovementPenalty));
 
                 input.forwardImpulse *= movementScale;
                 input.leftImpulse *= movementScale;
 
-                if (encumbrance >= CommonConfig.COMMON.jumpPreventionThreshold) {
+                if (encumbrance >= ServerConfig.INSTANCE.jumpPreventionThreshold) {
                     input.jumping = false;
                 }
             }

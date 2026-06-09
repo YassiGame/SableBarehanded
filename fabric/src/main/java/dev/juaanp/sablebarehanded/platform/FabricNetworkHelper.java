@@ -9,11 +9,9 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
-
 import java.util.UUID;
 
 public class FabricNetworkHelper implements INetworkHelper {
-
     @Override
     public void sendStartGrabbingAnimation(Player player) {
         if (player instanceof ServerPlayer serverPlayer) {
