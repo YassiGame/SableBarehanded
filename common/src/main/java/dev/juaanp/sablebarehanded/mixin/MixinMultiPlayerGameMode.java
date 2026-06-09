@@ -1,7 +1,6 @@
 package dev.juaanp.sablebarehanded.mixin;
 
 import dev.juaanp.sablebarehanded.client.handler.ClientInteractionHandler;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
@@ -22,16 +21,14 @@ public class MixinMultiPlayerGameMode {
 
     @Inject(method = "startDestroyBlock", at = @At("HEAD"), cancellable = true)
     private void onStartDestroyBlock(BlockPos pos, Direction face, CallbackInfoReturnable<Boolean> cir) {
-        if (ClientInteractionHandler.shouldCancelInteraction() ||
-                ClientInteractionHandler.shouldCancelBlockDestroy(Minecraft.getInstance().player)) {
+        if (ClientInteractionHandler.shouldCancelInteraction()) {
             cir.setReturnValue(false);
         }
     }
 
     @Inject(method = "continueDestroyBlock", at = @At("HEAD"), cancellable = true)
     private void onContinueDestroyBlock(BlockPos pos, Direction face, CallbackInfoReturnable<Boolean> cir) {
-        if (ClientInteractionHandler.shouldCancelInteraction() ||
-                ClientInteractionHandler.shouldCancelBlockDestroy(Minecraft.getInstance().player)) {
+        if (ClientInteractionHandler.shouldCancelInteraction()) {
             cir.setReturnValue(false);
         }
     }

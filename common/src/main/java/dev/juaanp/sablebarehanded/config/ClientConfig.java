@@ -3,14 +3,20 @@ package dev.juaanp.sablebarehanded.config;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import dev.juaanp.sablebarehanded.Constants;
+import org.slf4j.Logger;
+import com.mojang.logging.LogUtils;
+
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.nio.file.Paths;
 
 public class ClientConfig {
+    private static final Logger LOGGER = LogUtils.getLogger();
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final File FILE = Paths.get("config", Constants.MOD_ID + "-client.json").toFile();
+
+    public int configVersion = 3;
 
     public double verticalRotationSensitivity = 0.5;
     public double horizontalRotationSensitivity = 0.5;
@@ -46,22 +52,38 @@ public class ClientConfig {
                 try (FileReader reader = new FileReader(FILE)) {
                     ClientConfig loaded = GSON.fromJson(reader, ClientConfig.class);
                     if (loaded != null) {
-                        INSTANCE = loaded;
+
+                        if (loaded.configVersion < INSTANCE.configVersion) {
+                            LOGGER.warn("Sable Barehanded client config is outdated (v{} -> v{}). Migrating...",
+                                    loaded.configVersion, INSTANCE.configVersion);
+
+                            loaded.configVersion = INSTANCE.configVersion;
+
+                            INSTANCE = loaded;
+                            save();
+                        } else {
+                            INSTANCE = loaded;
+                        }
                     }
                 }
             } else {
                 save();
             }
         } catch (Exception e) {
-            Constants.LOG.error("Failed to load client config", e);
+            LOGGER.error("Failed to load client config", e);
         }
     }
 
     public static void save() {
-        try (FileWriter writer = new FileWriter(FILE)) {
-            GSON.toJson(INSTANCE, writer);
+        try {
+            if (!FILE.getParentFile().exists()) {
+                FILE.getParentFile().mkdirs();
+            }
+            try (FileWriter writer = new FileWriter(FILE)) {
+                GSON.toJson(INSTANCE, writer);
+            }
         } catch (Exception e) {
-            Constants.LOG.error("Failed to save client config", e);
+            LOGGER.error("Failed to save client config", e);
         }
     }
 }

@@ -3,14 +3,20 @@ package dev.juaanp.sablebarehanded.config;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import dev.juaanp.sablebarehanded.Constants;
+import org.slf4j.Logger;
+import com.mojang.logging.LogUtils;
+
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.nio.file.Paths;
 
 public class ServerConfig {
+    private static final Logger LOGGER = LogUtils.getLogger();
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final File FILE = Paths.get("config", Constants.MOD_ID + "-server.json").toFile();
+
+    public int configVersion = 3;
 
     public double maxForce = 120.0;
     public double minDistance = 1.5;
@@ -33,7 +39,7 @@ public class ServerConfig {
     public double barehandedAssemblyMaxDistance = 2.5;
     public double assemblyServerDistanceTolerance = 1.0;
     public double assemblyClientDistanceTolerance = 1.5;
-    public int fastLiftAssemblyTicks = 2;
+    public int fastLiftAssemblyTicks = 1;
     public double pullThreshold = 0.05;
     public double pullResistanceMultiplier = 0.6;
     public double assemblyMovementDamping = 0.5;
@@ -126,22 +132,36 @@ public class ServerConfig {
                 try (FileReader reader = new FileReader(FILE)) {
                     ServerConfig loaded = GSON.fromJson(reader, ServerConfig.class);
                     if (loaded != null) {
-                        INSTANCE = loaded;
+
+                        if (loaded.configVersion < INSTANCE.configVersion) {
+                            LOGGER.warn("Sable Barehanded server config is outdated (v{} -> v{}). Migrating...",
+                                    loaded.configVersion, INSTANCE.configVersion);
+                            loaded.configVersion = INSTANCE.configVersion;
+                            INSTANCE = loaded;
+                            save();
+                        } else {
+                            INSTANCE = loaded;
+                        }
                     }
                 }
             } else {
                 save();
             }
         } catch (Exception e) {
-            Constants.LOG.error("Failed to load server config", e);
+            LOGGER.error("Failed to load server config", e);
         }
     }
 
     public static void save() {
-        try (FileWriter writer = new FileWriter(FILE)) {
-            GSON.toJson(INSTANCE, writer);
+        try {
+            if (!FILE.getParentFile().exists()) {
+                FILE.getParentFile().mkdirs();
+            }
+            try (FileWriter writer = new FileWriter(FILE)) {
+                GSON.toJson(INSTANCE, writer);
+            }
         } catch (Exception e) {
-            Constants.LOG.error("Failed to save server config", e);
+            LOGGER.error("Failed to save server config", e);
         }
     }
 }
