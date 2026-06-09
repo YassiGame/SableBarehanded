@@ -32,9 +32,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.shapes.VoxelShape;
 import org.joml.AxisAngle4d;
 import org.joml.Quaterniond;
 import org.joml.Vector3d;
@@ -45,7 +43,6 @@ import java.util.Map;
 import java.util.UUID;
 
 public class GrabPhysicsManager {
-
     private static final ResourceLocation MOVEMENT_PENALTY_ID = ResourceLocation.fromNamespaceAndPath(Constants.MOD_ID, "grab_movement_penalty");
 
     private static class GrabSession {
@@ -159,7 +156,18 @@ public class GrabPhysicsManager {
                 if (entity instanceof Player player) {
                     boolean ignoreSelf = isRotating ? CommonConfig.COMMON.ignoreCollisionsRotationSelf : CommonConfig.COMMON.ignoreCollisionsGrabSelf;
                     boolean ignoreOthers = isRotating ? CommonConfig.COMMON.ignoreCollisionsRotationOtherPlayers : CommonConfig.COMMON.ignoreCollisionsGrabOtherPlayers;
-                    return player.getUUID().equals(grabberId) ? ignoreSelf : ignoreOthers;
+                    boolean isSelf = player.getUUID().equals(grabberId);
+
+                    if (isSelf) {
+                        // Forzar ignorar colisión si está muy cerca para evitar bucles de empuje (Penetration Resolution Loop)
+                        Vector3d blockPos = entry.getValue().subLevel.logicalPose().transformPosition(new Vector3d(entry.getValue().localPivot));
+                        double distSq = player.getEyePosition().distanceToSqr(new Vec3(blockPos.x, blockPos.y, blockPos.z));
+                        if (distSq < 4.0) { // ~2 bloques
+                            return true;
+                        }
+                    }
+
+                    return isSelf ? ignoreSelf : ignoreOthers;
                 } else {
                     return isRotating ? CommonConfig.COMMON.ignoreCollisionsRotationEntities : CommonConfig.COMMON.ignoreCollisionsGrabEntities;
                 }
@@ -343,22 +351,22 @@ public class GrabPhysicsManager {
         grab.rotationTicksLeft = 5;
 
         boolean isCreativeSuper = player.isCreative() && CommonConfig.COMMON.creativeSuperStrength;
-        double mass       = grab.subLevel.getMassTracker().getMass();
+        double mass = grab.subLevel.getMassTracker().getMass();
         double massFactor = isCreativeSuper ? 1.0 : (1.0 / (1.0 + mass * CommonConfig.COMMON.rotationMassDampingFactor));
 
-        double yawDelta   = yaw   * massFactor;
+        double yawDelta = yaw * massFactor;
         double pitchDelta = pitch * massFactor;
 
         if (CommonConfig.COMMON.preventFastRotations) {
-            yawDelta   = Mth.clamp(yawDelta,   -CommonConfig.COMMON.maxRotationSpeed, CommonConfig.COMMON.maxRotationSpeed);
+            yawDelta = Mth.clamp(yawDelta, -CommonConfig.COMMON.maxRotationSpeed, CommonConfig.COMMON.maxRotationSpeed);
             pitchDelta = Mth.clamp(pitchDelta, -CommonConfig.COMMON.maxRotationSpeed, CommonConfig.COMMON.maxRotationSpeed);
         }
 
-        final Vec3 look    = player.getLookAngle();
+        final Vec3 look = player.getLookAngle();
         final Vec3 worldUp = new Vec3(0.0, 1.0, 0.0);
 
-        Vec3   right = look.cross(worldUp);
-        double rLen  = right.length();
+        Vec3 right = look.cross(worldUp);
+        double rLen = right.length();
         if (rLen < 1e-6) {
             double yr = Math.toRadians(player.getYRot());
             right = new Vec3(Math.cos(yr), 0.0, Math.sin(yr));
@@ -368,9 +376,9 @@ public class GrabPhysicsManager {
 
         final Vec3 camUp = right.cross(look).normalize();
 
-        final double rx    = right.x * pitchDelta + camUp.x * yawDelta;
-        final double ry    = right.y * pitchDelta + camUp.y * yawDelta;
-        final double rz    = right.z * pitchDelta + camUp.z * yawDelta;
+        final double rx = right.x * pitchDelta + camUp.x * yawDelta;
+        final double ry = right.y * pitchDelta + camUp.y * yawDelta;
+        final double rz = right.z * pitchDelta + camUp.z * yawDelta;
         final double angle = Math.sqrt(rx * rx + ry * ry + rz * rz);
 
         if (angle > 1e-10) {
@@ -500,21 +508,75 @@ public class GrabPhysicsManager {
         ServerSubLevel standingSubLevel = (ServerSubLevel) Sable.HELPER.getTrackingSubLevel(player);
 
         if (standingSubLevel != null && standingSubLevel.equals(grab.subLevel)) {
-            grab.suspendTicksLeft = 15;
+            grab.suspendTicksLeft = CommonConfig.COMMON.standingOnGrabSuspendTicks;
             suspendPhysics = true;
         } else if (grab.suspendTicksLeft > 0) {
             grab.suspendTicksLeft--;
             suspendPhysics = true;
         }
 
-        if (player.getEyePosition().distanceToSqr(new Vec3(currentActualGrabBlockPos.x, currentActualGrabBlockPos.y, currentActualGrabBlockPos.z)) < 1.0 ||
-                player.position().distanceToSqr(currentActualGrabBlockPos.x, currentActualGrabBlockPos.y, currentActualGrabBlockPos.z) < 2.0) {
+        double eyeDistSq = player.getEyePosition().distanceToSqr(new Vec3(currentActualGrabBlockPos.x, currentActualGrabBlockPos.y, currentActualGrabBlockPos.z));
+        double bodyDistSq = player.position().distanceToSqr(currentActualGrabBlockPos.x, currentActualGrabBlockPos.y, currentActualGrabBlockPos.z);
+
+        double eyeSusDistSq = CommonConfig.COMMON.grabProximityEyeSuspendDistance * CommonConfig.COMMON.grabProximityEyeSuspendDistance;
+        double bodySusDistSq = CommonConfig.COMMON.grabProximityBodySuspendDistance * CommonConfig.COMMON.grabProximityBodySuspendDistance;
+
+        if (eyeDistSq < eyeSusDistSq || bodyDistSq < bodySusDistSq) {
             suspendPhysics = true;
         }
 
         double tension = currentActualGrabBlockPos.distance(currentCameraTarget);
-        double suspendThresh = isCreativeSuper ? 64.0 : CommonConfig.COMMON.tensionSuspendThreshold;
-        double breakThresh = isCreativeSuper ? 64.0 : CommonConfig.COMMON.tensionBreakThreshold;
+        double suspendThresh = isCreativeSuper ? CommonConfig.COMMON.creativeTensionSuspendThreshold : CommonConfig.COMMON.tensionSuspendThreshold;
+        double breakThresh = isCreativeSuper ? CommonConfig.COMMON.creativeTensionBreakThreshold : CommonConfig.COMMON.tensionBreakThreshold;
+
+        if (CommonConfig.COMMON.enablePhysicalTether && !player.isCreative() && !player.isSpectator()) {
+            double stretch = tension - grab.distance;
+            double armStretchTolerance = CommonConfig.COMMON.armStretchTolerance;
+
+            double mass = grab.subLevel.getMassTracker().getMass();
+            double objectWeight = mass * CommonConfig.COMMON.physicsGravity;
+            double weightRatio = Mth.clamp(objectWeight / actualMaxForce, 0.0, 1.0);
+            double encumbrance = Math.min(Math.pow(weightRatio, 2.0), 1.0);
+
+            Vec3 blockPos = new Vec3(currentActualGrabBlockPos.x, currentActualGrabBlockPos.y, currentActualGrabBlockPos.z);
+            Vec3 pullDirection = blockPos.subtract(player.getEyePosition()).normalize();
+            Vec3 awayDirection = pullDirection.scale(-1.0);
+            Vec3 currentVel = player.getDeltaMovement();
+            Vec3 newVel = currentVel;
+
+            if (stretch > armStretchTolerance) {
+                double activeStretch = stretch - armStretchTolerance;
+                double tetherStiffness = CommonConfig.COMMON.tetherStiffnessBase + (CommonConfig.COMMON.tetherStiffnessMultiplier * encumbrance);
+
+                Vec3 correction = pullDirection.scale(activeStretch * tetherStiffness);
+                double correctionY = correction.y < 0 ? correction.y : (correction.y * 0.4); // Suavizar tirón vertical para no lanzar al jugador
+
+                newVel = new Vec3(
+                        newVel.x + correction.x,
+                        newVel.y + correctionY,
+                        newVel.z + correction.z
+                );
+            }
+
+            double awaySpeed = currentVel.dot(awayDirection);
+            if (awaySpeed > 0.01 && encumbrance > 0.1) {
+                double retrocesoBlock = awaySpeed * encumbrance * CommonConfig.COMMON.pullResistanceMultiplier;
+                newVel = newVel.add(awayDirection.scale(-retrocesoBlock));
+            }
+
+            double maxAllowedDist = grab.distance + armStretchTolerance + 2.0;
+            if (tension > maxAllowedDist) {
+                double escapeSpeed = currentVel.dot(awayDirection);
+                if (escapeSpeed > 0.01) {
+                    newVel = newVel.subtract(awayDirection.scale(escapeSpeed));
+                }
+            }
+
+            if (newVel.distanceToSqr(currentVel) > 0.0001) {
+                player.setDeltaMovement(newVel);
+                player.hurtMarked = true;
+            }
+        }
 
         if (tension > suspendThresh) {
             if (tension > breakThresh) {
@@ -557,46 +619,46 @@ public class GrabPhysicsManager {
             relativeRot.getEulerAnglesXYZ(eulers);
 
             double grabStable = isCreativeSuper ? 1.0 : Math.pow(CommonConfig.COMMON.grabStabilization, 3);
-            double rotStable  = isCreativeSuper ? 1.0 : Math.pow(CommonConfig.COMMON.rotationStabilization, 3);
-            double mass       = grab.subLevel.getMassTracker().getMass();
+            double rotStable = isCreativeSuper ? 1.0 : Math.pow(CommonConfig.COMMON.rotationStabilization, 3);
+            double mass = grab.subLevel.getMassTracker().getMass();
 
             double horizontalSpeed = Math.sqrt(pVel.x * pVel.x + pVel.z * pVel.z);
             double effectiveSpeed = horizontalSpeed + (pVel.y > 0 ? pVel.y : 0.0);
 
-            double speedMultiplier = 1.0 + (effectiveSpeed * 15.0);
-            speedMultiplier = Math.min(speedMultiplier, 8.0);
+            double speedMultiplier = 1.0 + (effectiveSpeed * CommonConfig.COMMON.speedStiffnessMultiplierFactor);
+            speedMultiplier = Math.min(speedMultiplier, CommonConfig.COMMON.maxSpeedStiffnessMultiplier);
 
-            double baseStiffness   = isCreativeSuper ? CommonConfig.COMMON.stiffness * 10.0 : CommonConfig.COMMON.stiffness;
-            double linearDamping   = isCreativeSuper ? CommonConfig.COMMON.damping * 10.0 : CommonConfig.COMMON.damping;
-            double angularDamping  = isCreativeSuper ? CommonConfig.COMMON.angularDamping * 10.0 : CommonConfig.COMMON.angularDamping;
+            double baseStiffness   = isCreativeSuper ? CommonConfig.COMMON.stiffness * CommonConfig.COMMON.creativeStrengthMultiplier : CommonConfig.COMMON.stiffness;
+            double linearDamping   = isCreativeSuper ? CommonConfig.COMMON.damping * CommonConfig.COMMON.creativeStrengthMultiplier : CommonConfig.COMMON.damping;
+            double angularDamping  = isCreativeSuper ? CommonConfig.COMMON.angularDamping * CommonConfig.COMMON.creativeStrengthMultiplier : CommonConfig.COMMON.angularDamping;
 
-            double baseAngularForce   = actualMaxForce * 0.15;
-            double stableAngularForce = actualMaxForce * (10.0 + mass * 0.5);
+            double baseAngularForce   = actualMaxForce * CommonConfig.COMMON.baseAngularForceFactor;
+            double stableAngularForce = actualMaxForce * (CommonConfig.COMMON.stableAngularForceMassBase + mass * CommonConfig.COMMON.stableAngularForceMassFactor);
 
-            boolean disableMotors  = suspendPhysics;
+            boolean disableMotors = suspendPhysics;
 
-            double linearMaxForce  = disableMotors ? 0.0 : (isCreativeSuper ? 1e12 : actualMaxForce);
+            double linearMaxForce = disableMotors ? 0.0 : (isCreativeSuper ? 1e12 : actualMaxForce);
 
             Vector3d globalOffset = new Vector3d(targetAnchor).sub(grab.anchorGlobalOrigin);
-            Vector3d localOffset  = new Vector3d(globalOffset).rotate(new Quaterniond(grab.baseOrientation).invert());
+            Vector3d localOffset = new Vector3d(globalOffset).rotate(new Quaterniond(grab.baseOrientation).invert());
 
             double currentLinearStiffness = baseStiffness * speedMultiplier;
-            double currentLinearDamping   = linearDamping * speedMultiplier;
+            double currentLinearDamping = linearDamping * speedMultiplier;
 
             grab.constraintHandle.setMotor(ConstraintJointAxis.LINEAR_X, localOffset.x, currentLinearStiffness, currentLinearDamping, true, linearMaxForce);
             grab.constraintHandle.setMotor(ConstraintJointAxis.LINEAR_Y, localOffset.y, currentLinearStiffness, currentLinearDamping, true, linearMaxForce);
             grab.constraintHandle.setMotor(ConstraintJointAxis.LINEAR_Z, localOffset.z, currentLinearStiffness, currentLinearDamping, true, linearMaxForce);
 
             if (grab.isRotating) {
-                double angularStiffness = baseStiffness * (1.5 + (4.5 * rotStable));
-                double angularMaxForce  = disableMotors ? 0.0 : (isCreativeSuper ? 1e12 : (baseAngularForce + ((stableAngularForce - baseAngularForce) * rotStable)));
+                double angularStiffness = baseStiffness * (CommonConfig.COMMON.rotatingAngularStiffnessBase + (CommonConfig.COMMON.rotatingAngularStiffnessRange * rotStable));
+                double angularMaxForce = disableMotors ? 0.0 : (isCreativeSuper ? 1e12 : (baseAngularForce + ((stableAngularForce - baseAngularForce) * rotStable)));
 
                 grab.constraintHandle.setMotor(ConstraintJointAxis.ANGULAR_X, eulers.x, angularStiffness, angularDamping, true, angularMaxForce);
                 grab.constraintHandle.setMotor(ConstraintJointAxis.ANGULAR_Y, eulers.y, angularStiffness, angularDamping, true, angularMaxForce);
                 grab.constraintHandle.setMotor(ConstraintJointAxis.ANGULAR_Z, eulers.z, angularStiffness, angularDamping, true, angularMaxForce);
 
             } else {
-                double swayStiffness   = baseStiffness * (0.6 + (5.4 * grabStable));
+                double swayStiffness   = baseStiffness * (CommonConfig.COMMON.swayAngularStiffnessBase + (CommonConfig.COMMON.swayAngularStiffnessRange * grabStable));
                 double angularMaxForce = disableMotors ? 0.0 : (isCreativeSuper ? 1e12 : (baseAngularForce + ((stableAngularForce - baseAngularForce) * grabStable)));
 
                 for (ConstraintJointAxis axis : ConstraintJointAxis.ANGULAR) {
@@ -604,7 +666,7 @@ public class GrabPhysicsManager {
                 }
             }
 
-            if (!isCreativeSuper && !player.isSpectator()) {
+            if (CommonConfig.COMMON.enableEncumbrance && !isCreativeSuper && !player.isSpectator()) {
                 double objectWeight = mass * CommonConfig.COMMON.physicsGravity;
                 double weightRatio = Mth.clamp(objectWeight / actualMaxForce, 0.0, 1.0);
 
@@ -624,7 +686,8 @@ public class GrabPhysicsManager {
                 double kineticPenalty = kineticRatio * CommonConfig.COMMON.kineticPenaltyMultiplier;
 
                 double totalPenalty = basePenalty + weightPenalty + tensionPenalty + kineticPenalty;
-                totalPenalty = Mth.clamp(totalPenalty, 0.0, 1.0 - CommonConfig.COMMON.minSpeedWhileGrabbing);
+                totalPenalty = Mth.clamp(totalPenalty, 0.0, CommonConfig.COMMON.maxMovementPenalty);
+                totalPenalty = Math.min(totalPenalty, 1.0 - CommonConfig.COMMON.minSpeedWhileGrabbing);
 
                 AttributeInstance moveSpeed = player.getAttribute(Attributes.MOVEMENT_SPEED);
                 if (moveSpeed != null) {
@@ -648,50 +711,50 @@ public class GrabPhysicsManager {
 
             if (CommonConfig.COMMON.enableExhaustion && !player.isCreative() && !player.isSpectator() && player.level().getDifficulty() != net.minecraft.world.Difficulty.PEACEFUL) {
 
-                Vector3d springStretch = new Vector3d(targetAnchor).sub(currentActualGrabBlockPos);
-                double stretchLength = springStretch.length();
-
-                double theoreticalSpringForce = stretchLength * currentLinearStiffness;
-
                 mass = grab.subLevel.getMassTracker().getMass();
                 double objectWeight = mass * CommonConfig.COMMON.physicsGravity;
 
-                double weightRatio = Mth.clamp(objectWeight / actualMaxForce, 0.0, 1.0);
+                double freeWeightN = CommonConfig.COMMON.exhaustionPassiveThreshold;
+                double effectiveWeight = Math.max(0.0, objectWeight - freeWeightN);
+                double weightRatio = Mth.clamp(effectiveWeight / Math.max(1.0, actualMaxForce - freeWeightN), 0.0, 1.0);
 
-                double dynamicStruggle = Mth.clamp(theoreticalSpringForce / actualMaxForce, 0.0, 1.0);
-
-                double carryFactor = suspendPhysics ? 0.1 : 1.0;
-
-                double baseEffort = weightRatio * carryFactor;
-                double dynamicEffort = dynamicStruggle * Math.max(0.2, weightRatio);
-                double exertionRatio = Mth.clamp(Math.max(baseEffort, dynamicEffort), 0.0, 1.0);
-
-                if (player.tickCount % 10 == 0) {
-                    dev.juaanp.sablebarehanded.Constants.LOG.info(
-                            "[Sable Barehanded Debug] Ratio: {} | WeightRatio: {} | Stretch: {}m | TheoForce: {}N",
-                            String.format("%.3f", exertionRatio),
-                            String.format("%.3f", weightRatio),
-                            String.format("%.3f", stretchLength),
-                            String.format("%.2f", theoreticalSpringForce)
-                    );
+                double supportFactor = suspendPhysics ? 0.0 : 1.0;
+                Vec3 blockPos = new Vec3(currentActualGrabBlockPos.x, currentActualGrabBlockPos.y, currentActualGrabBlockPos.z);
+                double relativeHeight = blockPos.y - player.getY();
+                if (relativeHeight < 0.8 && supportFactor > 0) {
+                    supportFactor *= 0.5;
                 }
 
-                if (exertionRatio > 0.01) {
+                double baseEffort = weightRatio * supportFactor;
+
+                double blockSpeed = grab.subLevel.latestLinearVelocity.length();
+                double kineticRatio = Mth.clamp(blockSpeed / 3.0, 0.0, 1.0);
+                double kineticEffort = kineticRatio * weightRatio;
+
+                double tensionEffort = 0.0;
+                double maxAllowedDist = grab.distance + CommonConfig.COMMON.armStretchTolerance;
+                if (tension > maxAllowedDist) {
+                    double overStretch = Math.min(tension - maxAllowedDist, 2.0);
+                    tensionEffort = (overStretch / 2.0) * weightRatio;
+                }
+
+                double exertionRatio = Mth.clamp(baseEffort + kineticEffort + tensionEffort, 0.0, 1.0);
+
+                if (exertionRatio > 0.001) {
                     double dX = player.getX() - player.xo;
                     double dY = player.getY() - player.yo;
                     double dZ = player.getZ() - player.zo;
-                    double trueServerSpeed = Math.sqrt(dX * dX + dY * dY + dZ * dZ);
 
-                    double idleEffort = CommonConfig.COMMON.exhaustionIdleRate * exertionRatio;
-                    double moveEffort = CommonConfig.COMMON.exhaustionMovementRate * exertionRatio * (trueServerSpeed * 20.0);
+                    horizontalSpeed = Math.sqrt(dX * dX + dZ * dZ);
+                    double verticalSpeed = Math.max(0.0, dY);
 
-                    double tensionEffort = 0.0;
-                    if (tension > grab.distance + 1.5) {
-                        double activePull = Math.min(tension - (grab.distance + 1.5), 5.0);
-                        tensionEffort = CommonConfig.COMMON.exhaustionTensionRate * exertionRatio * activePull;
-                    }
+                    double weightedSpeed = horizontalSpeed + (verticalSpeed * 4.0);
 
-                    float totalExhaustion = (float) (idleEffort + moveEffort + tensionEffort);
+                    double idleEffort = CommonConfig.COMMON.exhaustionIdleRate * baseEffort;
+                    double moveEffort = CommonConfig.COMMON.exhaustionMovementRate * exertionRatio * (weightedSpeed * 20.0);
+                    double forceEffort = CommonConfig.COMMON.exhaustionForceRate * (kineticEffort + tensionEffort);
+
+                    float totalExhaustion = (float) (idleEffort + moveEffort + forceEffort);
 
                     if (totalExhaustion > 0.0f) {
                         player.causeFoodExhaustion(totalExhaustion);

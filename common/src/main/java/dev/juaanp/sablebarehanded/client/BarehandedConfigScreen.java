@@ -52,12 +52,12 @@ public class BarehandedConfigScreen {
         addDouble(assembly, eb, Component.literal("Movement Damping"), CommonConfig.Specs.ASSEMBLY_MOVEMENT_DAMPING, CommonConfig.COMMON.assemblyMovementDamping, v -> CommonConfig.COMMON.assemblyMovementDamping = v);
         physics.addEntry(assembly.build());
 
-        SubCategoryBuilder encumbrance = eb.startSubCategory(Component.literal("Encumbrance & Tethering"));
-        addBoolean(encumbrance, eb, Component.literal("Enable Encumbrance"), CommonConfig.Specs.ENABLE_ENCUMBRANCE, CommonConfig.COMMON.enableEncumbrance, v -> CommonConfig.COMMON.enableEncumbrance = v);
-        addDouble(encumbrance, eb, Component.literal("Physics Gravity (m/s^2)"), CommonConfig.Specs.PHYSICS_GRAVITY, CommonConfig.COMMON.physicsGravity, v -> CommonConfig.COMMON.physicsGravity = v);
-        addDouble(encumbrance, eb, Component.literal("Max Movement Penalty"), CommonConfig.Specs.MAX_MOVEMENT_PENALTY, CommonConfig.COMMON.maxMovementPenalty, v -> CommonConfig.COMMON.maxMovementPenalty = v);
-        addDouble(encumbrance, eb, Component.literal("Jump Prevention Threshold"), CommonConfig.Specs.JUMP_PREVENTION_THRESHOLD, CommonConfig.COMMON.jumpPreventionThreshold, v -> CommonConfig.COMMON.jumpPreventionThreshold = v);
-        addDouble(encumbrance, eb, Component.literal("Max Camera Penalty"), CommonConfig.Specs.MAX_CAMERA_PENALTY, CommonConfig.COMMON.maxCameraPenalty, v -> CommonConfig.COMMON.maxCameraPenalty = v);
+        SubCategoryBuilder encumbrance = eb.startSubCategory(Component.literal("Encumbrance & Tethering "));
+        addBoolean(encumbrance, eb, Component.literal("Enable Encumbrance "), CommonConfig.Specs.ENABLE_ENCUMBRANCE, CommonConfig.COMMON.enableEncumbrance, v -> CommonConfig.COMMON.enableEncumbrance = v);
+        addDouble(encumbrance, eb, Component.literal("Physics Gravity (m/s^2) "), CommonConfig.Specs.PHYSICS_GRAVITY, CommonConfig.COMMON.physicsGravity, v -> CommonConfig.COMMON.physicsGravity = v);
+        addDouble(encumbrance, eb, Component.literal("Max Movement Penalty "), CommonConfig.Specs.MAX_MOVEMENT_PENALTY, CommonConfig.COMMON.maxMovementPenalty, v -> CommonConfig.COMMON.maxMovementPenalty = v);
+        addDouble(encumbrance, eb, Component.literal("Jump Prevention Threshold "), CommonConfig.Specs.JUMP_PREVENTION_THRESHOLD, CommonConfig.COMMON.jumpPreventionThreshold, v -> CommonConfig.COMMON.jumpPreventionThreshold = v);
+        addDouble(encumbrance, eb, Component.literal("Max Camera Penalty "), CommonConfig.Specs.MAX_CAMERA_PENALTY, CommonConfig.COMMON.maxCameraPenalty, v -> CommonConfig.COMMON.maxCameraPenalty = v);
         addBoolean(encumbrance, eb, Component.literal("Enable Physical Tether"), CommonConfig.Specs.ENABLE_PHYSICAL_TETHER, CommonConfig.COMMON.enablePhysicalTether, v -> CommonConfig.COMMON.enablePhysicalTether = v);
         addDouble(encumbrance, eb, Component.literal("Arm Stretch Tolerance (m)"), CommonConfig.Specs.ARM_STRETCH_TOLERANCE, CommonConfig.COMMON.armStretchTolerance, v -> CommonConfig.COMMON.armStretchTolerance = v);
         addDouble(encumbrance, eb, Component.literal("Tether Stiffness Base"), CommonConfig.Specs.TETHER_STIFFNESS_BASE, CommonConfig.COMMON.tetherStiffnessBase, v -> CommonConfig.COMMON.tetherStiffnessBase = v);
@@ -134,10 +134,6 @@ public class BarehandedConfigScreen {
         addBoolean(rotInput, eb, Component.literal("Prevent Movement While Rotating"), CommonConfig.Specs.PREVENT_MOVEMENT_WHILE_ROTATING, CommonConfig.CLIENT.preventMovementWhileRotating, v -> CommonConfig.CLIENT.preventMovementWhileRotating = v);
         client.addEntry(rotInput.build());
 
-        SubCategoryBuilder inputMisc = eb.startSubCategory(Component.literal("Input & Interaction"));
-        addInt(inputMisc, eb, Component.literal("Regrab Debounce Ticks"), CommonConfig.Specs.REGRAB_DEBOUNCE_TICKS, CommonConfig.CLIENT.regrabDebounceTicks, v -> CommonConfig.CLIENT.regrabDebounceTicks = v);
-        client.addEntry(inputMisc.build());
-
         SubCategoryBuilder armRendering = eb.startSubCategory(Component.literal("Arm & HUD Rendering"));
         addDouble(armRendering, eb, Component.literal("Arm Transition Speed"), CommonConfig.Specs.ARM_TRANSITION_SPEED, CommonConfig.CLIENT.armTransitionSpeed, v -> CommonConfig.CLIENT.armTransitionSpeed = v);
         addDouble(armRendering, eb, Component.literal("Arm Grab Lower Offset (m)"), CommonConfig.Specs.ARM_GRAB_LOWER_OFFSET, CommonConfig.CLIENT.armGrabLowerOffset, v -> CommonConfig.CLIENT.armGrabLowerOffset = v);
@@ -153,10 +149,11 @@ public class BarehandedConfigScreen {
         addDouble(armRendering, eb, Component.literal("Grab Arm Offset Z"), CommonConfig.Specs.GRAB_ARM_OFFSET_Z, CommonConfig.CLIENT.grabArmOffsetZ, v -> CommonConfig.CLIENT.grabArmOffsetZ = v);
         client.addEntry(armRendering.build());
 
-        SubCategoryBuilder mining = eb.startSubCategory(Component.literal("Mining Prevention"));
-        addBoolean(mining, eb, Component.literal("Prevent Assembly When Mining"), CommonConfig.Specs.PREVENT_ASSEMBLY_WHEN_MINING, CommonConfig.CLIENT.preventAssemblyWhenMining, v -> CommonConfig.CLIENT.preventAssemblyWhenMining = v);
-        addDouble(mining, eb, Component.literal("Assembly Mining Threshold"), CommonConfig.Specs.BAREHANDED_ASSEMBLY_MINING_THRESHOLD, CommonConfig.CLIENT.barehandedAssemblyMiningThreshold, v -> CommonConfig.CLIENT.barehandedAssemblyMiningThreshold = v);
-        client.addEntry(mining.build());
+        SubCategoryBuilder interaction = eb.startSubCategory(Component.literal("Interaction"));
+        addBoolean(interaction, eb, Component.literal("Prevent Assembly When Mining"), CommonConfig.Specs.PREVENT_ASSEMBLY_WHEN_MINING, CommonConfig.CLIENT.preventAssemblyWhenMining, v -> CommonConfig.CLIENT.preventAssemblyWhenMining = v);
+        addDouble(interaction, eb, Component.literal("Assembly Mining Threshold"), CommonConfig.Specs.BAREHANDED_ASSEMBLY_MINING_THRESHOLD, CommonConfig.CLIENT.barehandedAssemblyMiningThreshold, v -> CommonConfig.CLIENT.barehandedAssemblyMiningThreshold = v);
+        addInt(interaction, eb, Component.literal("Regrab Debounce Ticks"), CommonConfig.Specs.REGRAB_DEBOUNCE_TICKS, CommonConfig.CLIENT.regrabDebounceTicks, v -> CommonConfig.CLIENT.regrabDebounceTicks = v);
+        client.addEntry(interaction.build());
 
         return builder.build();
     }

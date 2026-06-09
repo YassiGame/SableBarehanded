@@ -46,7 +46,7 @@ public class CommonConfig {
         // Assembly
         public static final BooleanSpec ENABLE_BAREHANDED_ASSEMBLY = new BooleanSpec(true);
         public static final DoubleSpec BAREHANDED_ASSEMBLY_SPEED_MULTIPLIER = new DoubleSpec(1.0, 0.1, 1000.0);
-        public static final DoubleSpec BAREHANDED_ASSEMBLY_MAX_DISTANCE = new DoubleSpec(3.0, 1.0, 1024.0);
+        public static final DoubleSpec BAREHANDED_ASSEMBLY_MAX_DISTANCE = new DoubleSpec(2.5, 1.0, 1024.0);
         public static final DoubleSpec ASSEMBLY_SERVER_DISTANCE_TOLERANCE = new DoubleSpec(1.0, 0.0, 1024.0, "Server-side grace distance added when validating assembly requests.");
         public static final DoubleSpec ASSEMBLY_CLIENT_DISTANCE_TOLERANCE = new DoubleSpec(1.5, 0.0, 1024.0, "Client-side grace distance before cancelling the charge.");
         public static final IntSpec FAST_LIFT_ASSEMBLY_TICKS = new IntSpec(2, 1, 12000, "Charge ticks for blocks with a BlockEntity but non-full collision (chests, barrels...).");
@@ -142,13 +142,13 @@ public class CommonConfig {
         public static final DoubleSpec TETHER_STIFFNESS_BASE = new DoubleSpec(0.15, 0.0, 10.0, "Base pull strength of the tether when stretched.");
         public static final DoubleSpec TETHER_STIFFNESS_MULTIPLIER = new DoubleSpec(0.85, 0.0, 50.0, "Additional pull strength based on the object's encumbrance.");
 
-        // Exhaustion (Hunger) - MUCHO MÁS FUERTE
+        // Exhaustion (Hunger)
         public static final BooleanSpec ENABLE_EXHAUSTION = new BooleanSpec(true, "Consumes player hunger based on physical effort when grabbing objects.");
-        public static final DoubleSpec EXHAUSTION_IDLE_RATE = new DoubleSpec(0.015, 0.0, 100.0, "Exhaustion added per tick just by holding a heavy object (0 = disabled).");
-        public static final DoubleSpec EXHAUSTION_MOVEMENT_RATE = new DoubleSpec(0.8, 0.0, 100.0, "Exhaustion multiplier based on player movement speed while holding.");
-        public static final DoubleSpec EXHAUSTION_TENSION_RATE = new DoubleSpec(0.3, 0.0, 100.0, "Exhaustion multiplier when pulling against a stuck object (tension).");
-        public static final DoubleSpec EXHAUSTION_FORCE_RATE = new DoubleSpec(0.6, 0.0, 100.0, "Exhaustion multiplier based on net physical force applied to the object.");
-        public static final DoubleSpec EXHAUSTION_PASSIVE_THRESHOLD = new DoubleSpec(0.9, 0.0, 1.0, "Fraction of object weight considered passive (ignored) when the object is supported/still.");
+        public static final DoubleSpec EXHAUSTION_IDLE_RATE = new DoubleSpec(0.02, 0.0, 1.0, "Exhaustion added per tick just by holding a heavy object in the air.");
+        public static final DoubleSpec EXHAUSTION_MOVEMENT_RATE = new DoubleSpec(0.08, 0.0, 1.0, "Exhaustion multiplier based on player walking/jumping speed while holding weight.");
+        public static final DoubleSpec EXHAUSTION_TENSION_RATE = new DoubleSpec(0.04, 0.0, 1.0, "Legacy/Extra multiplier when pulling against a stuck heavy object.");
+        public static final DoubleSpec EXHAUSTION_FORCE_RATE = new DoubleSpec(0.06, 0.0, 1.0, "Exhaustion multiplier based on kinetic energy (moving heavy blocks fast).");
+        public static final DoubleSpec EXHAUSTION_PASSIVE_THRESHOLD = new DoubleSpec(20.0, 0.0, 1000.0, "Weight in Newtons (approx 4kg) that is considered 'free' to hold without any effort.");
     }
 
     public static class Common {
@@ -263,7 +263,6 @@ public class CommonConfig {
         public boolean preventAssemblyWhenMining = Specs.PREVENT_ASSEMBLY_WHEN_MINING.def();
         public double barehandedAssemblyMiningThreshold = Specs.BAREHANDED_ASSEMBLY_MINING_THRESHOLD.def();
 
-        // Movido de Common a Client
         public int regrabDebounceTicks = Specs.REGRAB_DEBOUNCE_TICKS.def();
     }
 

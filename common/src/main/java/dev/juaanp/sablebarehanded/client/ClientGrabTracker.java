@@ -68,19 +68,6 @@ public class ClientGrabTracker {
 
                         Vec3 eyePos = mc.player.getEyePosition();
                         double currentDist = eyePos.distanceTo(actualPos);
-
-                        if (currentDist < CommonConfig.COMMON.minDistance) {
-                            Vec3 toBlock = actualPos.subtract(eyePos).normalize();
-                            Vec3 currentVel = mc.player.getDeltaMovement();
-
-                            double velTowardsBlock = currentVel.dot(toBlock);
-
-                            if (velTowardsBlock > 0) {
-                                currentVel = currentVel.add(toBlock.scale(-velTowardsBlock));
-                                mc.player.setDeltaMovement(currentVel);
-                            }
-                        }
-
                         double armStretchTolerance = CommonConfig.COMMON.armStretchTolerance;
 
                         double stretchBeyondRest = currentDist - grabRestDistance;
@@ -89,24 +76,6 @@ public class ClientGrabTracker {
                             currentTetherStrain = Mth.clamp(activeStretch / 2.0, 0.0, 1.0);
                         } else {
                             currentTetherStrain *= 0.85;
-                        }
-
-                        if (currentDist > grabRestDistance + armStretchTolerance) {
-                            double stretch = currentDist - (grabRestDistance + armStretchTolerance);
-                            Vec3 pullDirection = actualPos.subtract(eyePos).normalize();
-                            double encumbrance = getEncumbranceRatio(mc.player);
-                            double tetherStiffness = CommonConfig.COMMON.tetherStiffnessBase + (CommonConfig.COMMON.tetherStiffnessMultiplier * encumbrance);
-
-                            Vec3 correction = pullDirection.scale(stretch * tetherStiffness);
-                            Vec3 currentMotion = mc.player.getDeltaMovement();
-
-                            double correctionY = correction.y < 0 ? correction.y : (correction.y * 0.4);
-
-                            mc.player.setDeltaMovement(
-                                    currentMotion.x + correction.x,
-                                    currentMotion.y + correctionY,
-                                    currentMotion.z + correction.z
-                            );
                         }
                     } else {
                         isHoldingGrab = false;
@@ -198,8 +167,6 @@ public class ClientGrabTracker {
                 double stretch = currentDist - initialAssemblyDistance;
                 boolean requiresPulling = currentRequiredAssemblyTicks > 2;
 
-                double maxPullDistance = initialAssemblyDistance + CommonConfig.COMMON.armStretchTolerance;
-
                 float targetPull = 0.0F;
                 boolean shouldAdvanceCharge = false;
 
@@ -226,31 +193,6 @@ public class ClientGrabTracker {
                     smoothPullIntensity += (targetPull - smoothPullIntensity) * 0.15F;
                 }
                 isPulling = smoothPullIntensity > 0.05F;
-
-                Vec3 currentMovement = mc.player.getDeltaMovement();
-
-                if (requiresPulling) {
-                    Vec3 awayDirection = playerEyePos.subtract(targetCenter).normalize();
-                    double awaySpeed = currentMovement.dot(awayDirection);
-
-                    if (currentDist > maxPullDistance) {
-                        if (awaySpeed > 0) {
-                            currentMovement = currentMovement.add(awayDirection.scale(-awaySpeed));
-                        }
-                    } else if (awaySpeed > 0) {
-                        double maxRetrocesoSpeed = 0.08;
-                        if (awaySpeed > maxRetrocesoSpeed) {
-                            double excess = awaySpeed - maxRetrocesoSpeed;
-                            currentMovement = currentMovement.add(awayDirection.scale(-excess));
-                        }
-                    }
-
-                    if (stretch > 0.05) {
-                        currentMovement = currentMovement.scale(CommonConfig.COMMON.assemblyMovementDamping);
-                    }
-
-                    mc.player.setDeltaMovement(currentMovement);
-                }
 
                 if (shouldAdvanceCharge) {
                     assemblyChargeTicks++;
@@ -300,7 +242,7 @@ public class ClientGrabTracker {
         int hintY = textY - 14;
 
         if (!KeyBindings.ROTATE_KEY.isDown()) {
-            String hint = "Hold [" + rotateKey + "] to rotate";
+            String hint = "Hold [ " + rotateKey + " ] to rotate ";
             int width = mc.font.width(hint);
             graphics.drawString(mc.font, hint, (screenWidth - width) / 2, textY, 0xAAAAAA, true);
             return;
@@ -309,7 +251,7 @@ public class ClientGrabTracker {
         boolean isKeyDown = KeyBindings.PIVOT_KEY.isDown();
         boolean isCenter = CommonConfig.CLIENT.rotateAroundCenter ^ isKeyDown;
 
-        String text = "Rotation Pivot: " + (isCenter ? "CENTER OF MASS" : "GRAB POINT");
+        String text = "Rotation Pivot: " + (isCenter ? "CENTER OF MASS " : "GRAB POINT ");
         int color = isCenter ? 0x55FF55 : 0xFFAA00;
 
         int textWidth = mc.font.width(text);
@@ -322,9 +264,9 @@ public class ClientGrabTracker {
         graphics.fill(boxLeft, boxTop, boxRight, boxBottom, 0x88000000);
         graphics.drawString(mc.font, text, (screenWidth - textWidth) / 2, textY, color, true);
 
-        String action = isKeyDown ? "Release" : "Hold";
-        String target = isCenter ? "Grab Point" : "Center Mass";
-        String hint = action + " [" + pivotKey + "] for " + target;
+        String action = isKeyDown ? "Release " : "Hold ";
+        String target = isCenter ? "Grab Point " : "Center Mass ";
+        String hint = action + " [ " + pivotKey + " ] for " + target;
 
         int hintWidth = mc.font.width(hint);
         graphics.drawString(mc.font, hint, (screenWidth - hintWidth) / 2, hintY, 0xAAAAAA, true);
@@ -408,7 +350,7 @@ public class ClientGrabTracker {
     public static double getCameraRestrictionRatio(net.minecraft.world.entity.player.Player player) {
         double encumbrance = getEffectiveEncumbranceRatio(player);
         if (encumbrance <= 0.0) return 0.0;
-        return Math.max(encumbrance, currentTetherStrain);
+        return Math.max(encumbrance, currentTetherStrain) * CommonConfig.COMMON.maxCameraPenalty;
     }
 
     public static void resetGrabState() {
@@ -436,33 +378,5 @@ public class ClientGrabTracker {
             }
         }
         return null;
-    }
-
-    private static boolean pushPlayerToMinDistance(net.minecraft.world.entity.player.Player player, Vec3 targetPos) {
-        Vec3 eyePos = player.getEyePosition();
-        double currentDist = eyePos.distanceTo(targetPos);
-        double minDist = CommonConfig.COMMON.minDistance;
-
-        if (currentDist >= minDist) {
-            return false;
-        }
-
-        Vec3 pushDirection = eyePos.subtract(targetPos).normalize();
-        double pushAmount = minDist - currentDist;
-
-        player.setPos(
-                player.getX() + pushDirection.x * pushAmount,
-                player.getY() + pushDirection.y * pushAmount,
-                player.getZ() + pushDirection.z * pushAmount
-        );
-
-        Vec3 currentVel = player.getDeltaMovement();
-        double velTowardsBlock = currentVel.dot(pushDirection.scale(-1.0));
-        if (velTowardsBlock > 0) {
-            currentVel = currentVel.add(pushDirection.scale(velTowardsBlock));
-            player.setDeltaMovement(currentVel);
-        }
-
-        return true;
     }
 }
