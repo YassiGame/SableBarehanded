@@ -16,6 +16,7 @@ dependencies {
         capabilities {
             requireCapability "$group:$mod_id"
         }
+        exclude group: 'dev.ryanhcode.sable', module: "sable-common-${minecraft_version}"
     }
     commonJava project(path: ':common', configuration: 'commonJava')
     commonResources project(path: ':common', configuration: 'commonResources')

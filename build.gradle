@@ -1,5 +1,5 @@
 plugins {
-    id 'fabric-loom' version '1.15.4' apply false
+    id 'fabric-loom' version '1.16.1' apply false
     id 'net.neoforged.moddev' version '2.0.49-beta' apply false
     id("org.jetbrains.gradle.plugin.idea-ext") version "1.4.1"
 }
