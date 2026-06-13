@@ -42,6 +42,23 @@ repositories {
         name = 'BlameJared'
         url = 'https://maven.blamejared.com'
     }
+    maven {
+        name = "Modrinth"
+        url = "https://api.modrinth.com/maven"
+    }
+    maven {
+        name = "mainReleases"
+        url = uri("https://maven.ryanhcode.dev/releases")
+    }
+    maven { url "https://maven.shedaniel.me/" }
+    maven {
+        name = "Terraformers"
+        url = "https://maven.terraformersmc.com/"
+    }
+    maven {
+        name = "Fuzs"
+        url = "https://raw.githubusercontent.com/Fuzss/modresources/main/maven/"
+    }
 }
 
 // Declare capabilities on the outgoing configurations.
